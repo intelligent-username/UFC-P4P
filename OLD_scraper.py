@@ -64,50 +64,63 @@ def get_latest_scraped_date(output_file):
 def scrape_all_events(output_file):
     page_number = 1
     has_more_pages = True
+
     last_scraped_date = get_latest_scraped_date(output_file)
+    is_file_empty = not os.path.exists(output_file) or os.stat(output_file).st_size == 0
 
-    while has_more_pages:
-        soup = get_page_html(page_number)
-        event_list = soup.find_all("a", class_="b-link b-link_style_black")
-        
-        if not event_list:
-            has_more_pages = False
-        else:
-            for event in event_list:
-                event_name = event.text.strip()
-                event_url = event['href']
-                
-                event_date = scrape_event_date(event_url)
-                
-                if last_scraped_date and event_date <= last_scraped_date:
-                    print(f"Stopping at already scraped event: {event_name} ({event_date})")
-                    has_more_pages = False
-                    break  # Stop scraping if we reach an event we've already scraped
-                
-                print(f"Scraping event: {event_name} ({event_date})")
-                scrape_event(event_name, event_url, event_date, output_file)
+    with open(output_file, 'a' if not is_file_empty else 'w', newline='', encoding='utf-8') as csvfile:
+        fieldnames = ["event", "fighter_1", "fighter_2", "result", "method", "round", "time", "weight_class", "gender", "date"]
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
-            page_number += 1
-            time.sleep(1)  # Optional delay to avoid overloading the server
+        if is_file_empty:
+            writer.writeheader()
 
-# Scrape each event and immediately add it to the top of the CSV
-def scrape_event(event_name, event_url, event_date, output_file):
+        while has_more_pages:
+            soup = get_page_html(page_number)
+            event_list = soup.find_all("a", class_="b-link b-link_style_black")
+            
+            if not event_list:
+                has_more_pages = False
+            else:
+                for event in event_list:
+                    event_name = event.text.strip()
+                    event_url = event['href']
+                    
+                    event_date = scrape_event_date(event_url)
+                    
+                    if last_scraped_date and event_date <= last_scraped_date:
+                        print(f"Stopping at already scraped event: {event_name} ({event_date})")
+                        return  # Stop scraping if we reach an event we've already scraped
+                    
+                    print(f"Scraping event: {event_name} ({event_date})")
+                    scrape_event(event_name, event_url, event_date, writer)
+
+                page_number += 1
+                time.sleep(1)  # Optional delay to avoid overloading the server
+
+# Scrape each event and append fight details to CSV
+def scrape_event(event_name, event_url, event_date, writer):
+    # Request event page
     event_response = requests.get(event_url)
     event_soup = BeautifulSoup(event_response.content, "html.parser")
     
+    # Scrape fight details (fight table)
     fight_table = event_soup.find("tbody")
     
+    # Some pages might not have fights listed, so we check first
     if fight_table:
         for fight_row in fight_table.find_all("tr"):
             fight_data = fight_row.find_all("td")
 
+            # Ensure the correct number of columns are present
             if len(fight_data) >= 10:
+                # Collect fight details
                 result = fight_data[0].find('i', class_='b-flag__text').text.strip() if fight_data[0].find('i', class_='b-flag__text') else 'Unknown'
                 fighter_1 = fight_data[1].find_all("p")[0].text.strip()
                 fighter_2 = fight_data[1].find_all("p")[1].text.strip()
-                weight_class = fight_data[6].find("p").text.split("<br>")[0].strip()
+                weight_class = fight_data[6].find("p").text.split("<br>")[0].strip()  # Get weight class from the 7th column
                 gender = infer_gender(weight_class)
-                method = clean_method(fight_data[7].find("p").text.strip())
+                method = clean_method(fight_data[7].find("p").text.strip())  # Clean the method field to remove newlines and spaces
                 round_number = fight_data[8].find("p").text.strip()
                 time_of_fight = fight_data[9].find("p").text.strip()
 
@@ -125,27 +138,8 @@ def scrape_event(event_name, event_url, event_date, output_file):
                     "date": event_date
                 }
 
-                # Read the existing content of the file
-                existing_data = []
-                if os.path.exists(output_file):
-                    with open(output_file, 'r', newline='', encoding='utf-8') as csvfile:
-                        reader = csv.DictReader(csvfile)
-                        existing_data = list(reader)  # Store the existing rows
-
-                # Write the new fight at the top followed by existing data
-                with open(output_file, 'w', newline='', encoding='utf-8') as csvfile:
-                    fieldnames = ["event", "fighter_1", "fighter_2", "result", "method", "round", "time", "weight_class", "gender", "date"]
-                    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-
-                    writer.writeheader()  # Write the header
-
-                    # Write the new fight details first
-                    writer.writerow(fight_details)
-
-                    # Then write the old data below it
-                    writer.writerows(existing_data)
-
-                print(f"Added: {fighter_1} vs {fighter_2} to the top of the file from event: {event_name}")
+                writer.writerow(fight_details)  # Write each fight's data to the CSV
+                print(f"Finished: {fighter_1} vs {fighter_2} from event: {event_name}")
 
 if __name__ == "__main__":
     scrape_all_events('fights.csv')
