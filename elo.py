@@ -1,128 +1,174 @@
-import sqlite3
 import csv
 import math
+import os
+from datetime import datetime
 
 # Initialize constants
 INITIAL_ELO = 500
-K_FACTOR = 20
-BONUS_KO_SUB = 0.15  # 15% bonus KO/TKO or Submission
-ROUND_BONUS = 0.02   # 2% bonus for each round before round 5
+K_FACTOR = 30
+BONUS_KO_SUB = 0.15
+ROUND_BONUS = 0.02
 
-# Connect to SQLite database (creates file if it doesn't exist)
-conn = sqlite3.connect('elo_database.db')
-cursor = conn.cursor()
+# Read the most recent fight date from file
+def get_most_recent_date():
+    try:
+        with open('latest_fight.txt', 'r') as f:
+            return datetime.strptime(f.read().strip(), "%d-%m-%Y")
+    except FileNotFoundError:
+        return datetime.min  # If no record, return very early date
 
-# Fighter Elo ratings
-cursor.execute('''
-CREATE TABLE IF NOT EXISTS fighters (
-    fighter_name TEXT PRIMARY KEY,
-    elo REAL
-)
-''')
+# Update the most recent fight date
+def update_most_recent_date(date):
+    with open('latest_fight.txt', 'w') as f:
+        f.write(date.strftime("%d-%m-%Y"))
 
-# Storing fight history
-cursor.execute('''
-CREATE TABLE IF NOT EXISTS fight_history (
-    event TEXT,
-    fighter_1 TEXT,
-    fighter_2 TEXT,
-    fighter_1_elo REAL,
-    fighter_2_elo REAL,
-    result TEXT,
-    method TEXT,
-    round TEXT,
-    date TEXT
-)
-''')
+# Function to load fighter Elos into memory
+def load_fighters():
+    fighters = {}
+    try:
+        with open('fighters.csv', 'r', newline='') as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                fighters[row['fighter_name']] = float(row['current_elo'])
+    except FileNotFoundError:
+        pass
+    return fighters
 
-# Function to get or initialize fighter Elo
-def get_fighter_elo(fighter_name):
-    cursor.execute("SELECT elo FROM fighters WHERE fighter_name=?", (fighter_name,))
-    row = cursor.fetchone()
-    if row is None:
-        # Fighter doesn't exist in the database, so insert with INITIAL_ELO
-        cursor.execute("INSERT INTO fighters (fighter_name, elo) VALUES (?, ?)", (fighter_name, INITIAL_ELO))
-        conn.commit()
-        return INITIAL_ELO
-    return row[0]
+# Function to save fighter Elos back to file
+def save_fighters(fighters):
+    with open('fighters.csv', 'w', newline='') as csvfile:
+        fieldnames = ['fighter_name', 'current_elo']
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writeheader()
+        for fighter, elo in fighters.items():
+            writer.writerow({'fighter_name': fighter, 'current_elo': elo})
 
-# Function to update fighter Elo in the database
-def update_fighter_elo(fighter_name, new_elo):
-    cursor.execute("UPDATE fighters SET elo=? WHERE fighter_name=?", (new_elo, fighter_name))
-    conn.commit()
+# Function to update Elo history
+def update_elo_history(fighter_name, new_elo, history_file='elo_history.csv'):
+    history_data = {}
+    
+    # Read current history data
+    if os.path.exists(history_file):
+        with open(history_file, mode='r', newline='', encoding='utf-8') as file:
+            reader = csv.reader(file)
+            for row in reader:
+                if row:
+                    fighter = row[0]
+                    elos = [float(elo) for elo in row[1:]]
+                    history_data[fighter] = elos
+    
+    # Update or add Elo for the fighter
+    if fighter_name in history_data:
+        history_data[fighter_name].append(new_elo)
+    else:
+        history_data[fighter_name] = [INITIAL_ELO, new_elo]
+    
+    # Write back the updated history data
+    with open(history_file, mode='w', newline='', encoding='utf-8') as file:
+        writer = csv.writer(file)
+        for fighter, elos in history_data.items():
+            writer.writerow([fighter] + elos)
+            
+# Function to update metadata
+def update_fighter_metadata(fighter_name, gender, weight_class):
+    metadata = []
+    updated = False
 
-# Function to calculate expected score based on Elo difference
+    try:
+        with open('fighter_metadata.csv', 'r', newline='') as csvfile:
+            reader = csv.DictReader(csvfile)
+            metadata = list(reader)
+    except FileNotFoundError:
+        pass
+
+    for fighter in metadata:
+        if fighter['fighter_name'] == fighter_name:
+            fighter['gender'] = gender
+            fighter['latest_weight_class'] = weight_class
+            updated = True
+            break
+
+    if not updated:
+        metadata.append({'fighter_name': fighter_name, 'gender': gender, 'latest_weight_class': weight_class})
+
+    with open('fighter_metadata.csv', 'w', newline='') as csvfile:
+        fieldnames = ['fighter_name', 'gender', 'latest_weight_class']
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(metadata)
+
+# Calculate expected score based on Elo difference
 def expected_score(elo_a, elo_b):
     return 1 / (1 + 10 ** ((elo_b - elo_a) / 400))
 
-# Function to update Elo based on result, with KO/Submission bonuses
+# Function to update Elo
 def update_elo(fighter_1_elo, fighter_2_elo, result, method, fight_round):
     expected_1 = expected_score(fighter_1_elo, fighter_2_elo)
     
-    if result == 'win':  # Fighter 1 wins
-        score_1 = 1
-    elif result == 'draw':  # Draw
-        score_1 = 0.5
-    else:  # Fighter 1 loses
-        score_1 = 0
-    
-    # Calculate Elo change using the K-factor
+    score_1 = 1 if result == 'win' else 0.5 if result == 'draw' else 0
     elo_change_1 = K_FACTOR * (score_1 - expected_1)
     
-    # Apply bonuses for KO/TKO/Sub and round bonuses
     if method in ['KO', 'TKO', 'SUB']:
-        round_factor = max(1, 5 - int(fight_round))  # Rounds before round 5 get bonus
+        round_factor = max(1, 5 - int(fight_round))
         bonus = BONUS_KO_SUB + (ROUND_BONUS * round_factor)
         elo_change_1 += elo_change_1 * bonus
 
-    # Update both fighter's Elos
     fighter_1_new_elo = fighter_1_elo + elo_change_1
     fighter_2_new_elo = fighter_2_elo - elo_change_1
     
     return round(fighter_1_new_elo, 2), round(fighter_2_new_elo, 2)
 
-# Function to process fights from the CSV file
+# Process fights from CSV, only after the most recent fight
 def process_fights(csv_file):
+    most_recent_date = get_most_recent_date()
+    fighters = load_fighters()
+    latest_fight_date = most_recent_date  # To track the newest fight processed
+
     with open(csv_file, 'r', newline='', encoding='utf-8') as csvfile:
         reader = csv.DictReader(csvfile)
         
         for row in reader:
-            fighter_1 = row['fighter_1']
-            fighter_2 = row['fighter_2']
-            result = row['result']  # 'win' for fighter_1, 'draw' for a tie
-            method = row['method']  # KO, TKO, SUB, etc.
-            fight_round = row['round']
-            event = row['event']
-            date = row['date']
+            fight_date = datetime.strptime(row['date'], "%d-%m-%Y")
+            if fight_date <= most_recent_date:
+                continue  # Skip fights already processed
+
+            fighter_1, fighter_2 = row['fighter_1'], row['fighter_2']
+            result, method, fight_round = row['result'], row['method'], row['round']
+            gender, weight_class = row['gender'], row['weight_class']
             
-            # Get current Elo for both fighters
-            fighter_1_elo = get_fighter_elo(fighter_1)
-            fighter_2_elo = get_fighter_elo(fighter_2)
+            # Load current Elo, default to INITIAL_ELO
+            fighter_1_elo = fighters.get(fighter_1, INITIAL_ELO)
+            fighter_2_elo = fighters.get(fighter_2, INITIAL_ELO)
             
-            # Update Elo based on the fight result
+            # Calculate new Elos
             fighter_1_new_elo, fighter_2_new_elo = update_elo(fighter_1_elo, fighter_2_elo, result, method, fight_round)
             
-            # Update Elo ratings in the database
-            update_fighter_elo(fighter_1, fighter_1_new_elo)
-            update_fighter_elo(fighter_2, fighter_2_new_elo)
+            # Update Elo in memory
+            fighters[fighter_1] = fighter_1_new_elo
+            fighters[fighter_2] = fighter_2_new_elo
             
-            # Insert fight details into fight history
-            cursor.execute('''
-                INSERT INTO fight_history (event, fighter_1, fighter_2, fighter_1_elo, fighter_2_elo, result, method, round, date)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (event, fighter_1, fighter_2, fighter_1_new_elo, fighter_2_new_elo, result, method, fight_round, date))
-            conn.commit()
+            # Update Elo history
+            update_elo_history(fighter_1, fighter_1_new_elo)
+            update_elo_history(fighter_2, fighter_2_new_elo)
+            
+            # Update metadata (gender, weight class)
+            update_fighter_metadata(fighter_1, gender, weight_class)
+            update_fighter_metadata(fighter_2, gender, weight_class)
 
-process_fights('fights.csv')
+            # Track latest fight date
+            if fight_date > latest_fight_date:
+                latest_fight_date = fight_date
 
-def get_fighter_current_elo(fighter_name):
-    cursor.execute("SELECT elo FROM fighters WHERE fighter_name=?", (fighter_name,))
-    row = cursor.fetchone()
-    if row:
-        return f"{fighter_name}'s current Elo rating is {row[0]}"
-    else:
-        return f"{fighter_name} does not exist in the database."
+    # Save updated fighter Elos
+    save_fighters(fighters)
 
-print(get_fighter_current_elo("Conor McGregor"))
+    # Update most recent fight date
+    if latest_fight_date > most_recent_date:
+        update_most_recent_date(latest_fight_date)
 
-conn.close()
+
+# Main execution
+if __name__ == "__main__":
+    print("Note: This will take a while to run")
+    process_fights('fights.csv')
+    print("Elo ratings updated successfully.")
