@@ -46,15 +46,15 @@ def convert_date_to_dd_mm_yyyy(date_str):
         return f"{day}-{month}-{year}"
     return "Unknown"
 
-# Get the latest date from the existing CSV file
+# Get the latest date from the last row of the existing CSV file
 def get_latest_scraped_date(output_file):
     if os.path.exists(output_file):
         try:
             with open(output_file, 'r', newline='', encoding='utf-8') as csvfile:
                 reader = csv.DictReader(csvfile)
-                first_row = next(reader, None)
-                if first_row:
-                    return first_row['date']  # Return the date from the first data row
+                rows = list(reader)  # Load all rows
+                if rows:
+                    return rows[-1]['date']  # Return the date from the last data row
                 return None
         except Exception as e:
             print(f"Error reading the latest date from CSV: {e}")
@@ -65,6 +65,8 @@ def scrape_all_events(output_file):
     page_number = 1
     has_more_pages = True
     last_scraped_date = get_latest_scraped_date(output_file)
+    
+    temp_data = []  # Temporary list to hold new scraped data
 
     while has_more_pages:
         soup = get_page_html(page_number)
@@ -79,24 +81,31 @@ def scrape_all_events(output_file):
                 
                 event_date = scrape_event_date(event_url)
                 
+                # If the event date is less than or equal to the latest scraped date, stop scraping
                 if last_scraped_date and event_date <= last_scraped_date:
                     print(f"Stopping at already scraped event: {event_name} ({event_date})")
                     has_more_pages = False
                     break  # Stop scraping if we reach an event we've already scraped
                 
                 print(f"Scraping event: {event_name} ({event_date})")
-                scrape_event(event_name, event_url, event_date, output_file)
+                temp_data.extend(scrape_event(event_name, event_url, event_date))  # Collect data for this event
 
             page_number += 1
             time.sleep(1)  # Optional delay to avoid overloading the server
 
-# Scrape each event and immediately add it to the top of the CSV
-def scrape_event(event_name, event_url, event_date, output_file):
+    # Append the new scraped data to the existing CSV file
+    if temp_data:
+        append_to_csv(output_file, temp_data)
+        print(f"Added {len(temp_data)} new fights to {output_file}")
+
+# Scrape each event and return the fight details as a list of dicts
+def scrape_event(event_name, event_url, event_date):
     event_response = requests.get(event_url)
     event_soup = BeautifulSoup(event_response.content, "html.parser")
     
     fight_table = event_soup.find("tbody")
-    
+    fights = []
+
     if fight_table:
         for fight_row in fight_table.find_all("tr"):
             fight_data = fight_row.find_all("td")
@@ -111,7 +120,7 @@ def scrape_event(event_name, event_url, event_date, output_file):
                 round_number = fight_data[8].find("p").text.strip()
                 time_of_fight = fight_data[9].find("p").text.strip()
 
-                # Prepare fight details for writing to CSV
+                # Collect fight details
                 fight_details = {
                     "event": event_name,
                     "fighter_1": fighter_1,
@@ -125,27 +134,21 @@ def scrape_event(event_name, event_url, event_date, output_file):
                     "date": event_date
                 }
 
-                # Read the existing content of the file
-                existing_data = []
-                if os.path.exists(output_file):
-                    with open(output_file, 'r', newline='', encoding='utf-8') as csvfile:
-                        reader = csv.DictReader(csvfile)
-                        existing_data = list(reader)  # Store the existing rows
+                fights.append(fight_details)
 
-                # Write the new fight at the top followed by existing data
-                with open(output_file, 'w', newline='', encoding='utf-8') as csvfile:
-                    fieldnames = ["event", "fighter_1", "fighter_2", "result", "method", "round", "time", "weight_class", "gender", "date"]
-                    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+    return fights  # Return the collected fight details
 
-                    writer.writeheader()  # Write the header
+# Append new data to the existing CSV file
+def append_to_csv(output_file, new_data):
+    with open(output_file, 'a', newline='', encoding='utf-8') as csvfile:
+        fieldnames = ["event", "fighter_1", "fighter_2", "result", "method", "round", "time", "weight_class", "gender", "date"]
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
-                    # Write the new fight details first
-                    writer.writerow(fight_details)
+        if os.stat(output_file).st_size == 0:  # If file is empty, write the header first
+            writer.writeheader()
 
-                    # Then write the old data below it
-                    writer.writerows(existing_data)
-
-                print(f"Added: {fighter_1} vs {fighter_2} to the top of the file from event: {event_name}")
+        # Write all new fights
+        writer.writerows(new_data)
 
 if __name__ == "__main__":
     scrape_all_events('fights.csv')
