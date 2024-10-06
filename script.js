@@ -293,12 +293,13 @@ function displayAbout() {
 document.addEventListener('DOMContentLoaded', () => {
     loadData();
 
-    const nav = document.querySelector('nav');
-    nav.addEventListener('click', (event) => {
-        if (event.target.tagName === 'A') {
-            event.preventDefault();
-            const page = event.target.getAttribute('href').substring(1);
-            switch (page) {
+    const navLinks = document.querySelectorAll('nav a');
+    navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const section = e.target.getAttribute('href').substring(1);
+
+            switch (section) {
                 case 'current-rankings':
                     displayCurrentRankings();
                     break;
@@ -317,7 +318,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 case 'about':
                     displayAbout();
                     break;
+                default:
+                    displayCurrentRankings(); // Default to current rankings if none match
             }
-        }
+        });
     });
 });
