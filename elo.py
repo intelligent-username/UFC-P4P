@@ -44,7 +44,8 @@ def save_fighters(fighters):
             writer.writerow({'fighter_name': fighter, 'current_elo': elo})
 
 # Function to update Elo history
-def update_elo_history(fighter_name, new_elo, history_file='elo_history.csv'):
+def update_elo_history(fighter_name, new_elo, history_file='elo_history.txt'):
+    # Note: Might be confused with elo_history.csv (NONEXISTENT) if there's some mistake in the future
     history_data = {}
     
     # Read current history data

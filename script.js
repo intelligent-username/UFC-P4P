@@ -3,29 +3,30 @@ let fightHistory = [];
 let fighterMetadata = [];
 let currentDisplayCount = 50;
 
-// Load data from CSVs using PapaParse
 async function loadData() {
     try {
-        const [fightersResponse, historyResponse, metadataResponse] = await Promise.all([
+        const [fightersResponse, metadataResponse, historyResponse] = await Promise.all([
             fetch('fighters.csv'),
-            fetch('elo_history.csv'),
-            fetch('fighter_metadata.csv')
+            fetch('fighter_metadata.csv'),
+            fetch('elo_history.txt') // Treating elo history as a .txt file
         ]);
 
-        if (!fightersResponse.ok || !historyResponse.ok || !metadataResponse.ok) {
-            throw new Error('Failed to fetch CSV files');
+        if (!fightersResponse.ok || !metadataResponse.ok || !historyResponse.ok) {
+            throw new Error('Failed to fetch files');
         }
 
-        const [fightersData, historyData, metadataData] = await Promise.all([
+        const [fightersData, metadataData, historyData] = await Promise.all([
             fightersResponse.text(),
-            historyResponse.text(),
-            metadataResponse.text()
+            metadataResponse.text(),
+            historyResponse.text()
         ]);
 
         fighters = Papa.parse(fightersData, { header: true, dynamicTyping: true }).data;
-        fightHistory = Papa.parse(historyData, { header: true, dynamicTyping: true }).data;
         fighterMetadata = Papa.parse(metadataData, { header: true, dynamicTyping: true }).data;
-
+        
+        // Process elo_history.txt manually
+        fightHistory = processEloHistory(historyData);
+        
         updateRankings();
     } catch (error) {
         console.error('Error loading data:', error);
@@ -33,11 +34,22 @@ async function loadData() {
     }
 }
 
-// Function to update the rankings display based on the selected type
+function processEloHistory(data) {
+    const lines = data.split('\n').filter(line => line.trim()); // Remove any empty lines
+    return lines.map(line => {
+        const parts = line.split(',');
+        const fighterName = parts[0].trim();
+        const elos = parts.slice(1).map(Number); // Get all ELOs as numbers
+        const maxElo = Math.max(...elos); // Find the maximum ELO for the fighter
+        return { fighter_name: fighterName, elo: maxElo };
+    });
+}
+
 function updateRankings() {
     const rankingType = document.getElementById('ranking-type').value;
     const rankingTitle = document.getElementById('ranking-title');
     const rankingBody = document.getElementById('ranking-body');
+
     let rankedFighters;
 
     if (rankingType === 'current') {
@@ -45,35 +57,16 @@ function updateRankings() {
         rankedFighters = [...fighters].sort((a, b) => b.current_elo - a.current_elo);
     } else {
         rankingTitle.textContent = 'Historical Rankings';
-
-        // Find maximum Elo for each fighter in the history data
-        const historicalFighterMaxElos = fightHistory.reduce((acc, fight) => {
-            const existingFighter = acc.find(f => f.fighter_name === fight.fighter_name);
-            const fightElo = fight.elo;
-            
-            if (!existingFighter) {
-                acc.push({ fighter_name: fight.fighter_name, elo: fightElo });
-            } else if (fightElo > existingFighter.elo) {
-                existingFighter.elo = fightElo;
-            }
-            return acc;
-        }, []);
-
-        // Sort by highest Elo values
-        rankedFighters = historicalFighterMaxElos.sort((a, b) => b.elo - a.elo);
+        rankedFighters = fightHistory.sort((a, b) => b.elo - a.elo);
     }
 
     displayRankings(rankedFighters);
 }
 
-
-// Function to display fighters in the table
 function displayRankings(rankedFighters) {
     const rankingBody = document.getElementById('ranking-body');
     rankingBody.innerHTML = rankedFighters.slice(0, currentDisplayCount).map((fighter, index) => {
-        const metadata = fighterMetadata.find(m => m.fighter_name === fighter.fighter_name) || {};  // Reference to metadata
-        
-        // Ensure metadata.latest_weight_class is used correctly
+        const metadata = fighterMetadata.find(m => m.fighter_name === fighter.fighter_name) || {};
         return `
             <tr>
                 <td>${index + 1}</td>
@@ -87,12 +80,6 @@ function displayRankings(rankedFighters) {
     updateLoadMoreButton(rankedFighters.length);
 }
 
-function loadMore() {
-    currentDisplayCount += 20;  // Increase display count
-    updateRankings();  // Call function to refresh the display
-}
-
-// Make sure the button is visible only when necessary
 function updateLoadMoreButton(totalFighters) {
     const loadMoreButton = document.getElementById('load-more');
     if (currentDisplayCount < totalFighters) {
@@ -102,11 +89,15 @@ function updateLoadMoreButton(totalFighters) {
     }
 }
 
-// Event listeners for when the page loads
+function loadMore() {
+    currentDisplayCount += 20;
+    updateRankings();
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     loadData();
     document.getElementById('ranking-type').addEventListener('change', () => {
-        currentDisplayCount = 50;  // Reset count to 50 on ranking type change
+        currentDisplayCount = 50;
         updateRankings();
     });
     document.getElementById('load-more').addEventListener('click', loadMore);
