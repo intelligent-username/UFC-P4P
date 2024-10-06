@@ -35,25 +35,22 @@ async function loadData() {
 }
 
 function processEloHistory(data) {
-    const lines = data.split('\n').filter(line => line.trim());
-    const historicalElos = [];
+    const lines = data.split('\n').filter(line => line.trim()); // Remove empty lines
 
-    lines.forEach(line => {
+    return lines.map(line => {
         const parts = line.split(',').map(item => item.trim());
-        const fighterName = parts[0];
-        const elos = parts.slice(1).map(Number).filter(elo => !isNaN(elo));
-        const maxElo = Math.max(...elos);
-        historicalElos.push({ fighter_name: fighterName, max_elo: maxElo });
-    });
+        const fighterName = parts[0]; // Fighter's name is the first part
+        const elos = parts.slice(1).map(Number).filter(elo => !isNaN(elo)); // Convert ELOs to numbers
 
-    return historicalElos;
+        const maxElo = Math.max(...elos); // Find the maximum ELO
+        return { fighter_name: fighterName, max_elo: maxElo }; // Return fighter with max ELO
+    });
 }
 
 function updateRankings() {
     const rankingType = document.getElementById('ranking-type').value;
     const rankingTitle = document.getElementById('ranking-title');
     const rankingBody = document.getElementById('ranking-body');
-    const weightClassSelect = document.getElementById('weight-class-select');
 
     let rankedFighters;
 
@@ -66,15 +63,7 @@ function updateRankings() {
         rankedFighters = historicalElos.sort((a, b) => b.max_elo - a.max_elo);
     }
 
-    // Display all weight classes by default
-    const selectedWeightClass = weightClassSelect.value;
-    if (selectedWeightClass === 'all') {
-        displayRankings(rankedFighters);
-    } else {
-        // Filter by selected weight class
-        const filteredFighters = rankedFighters.filter(fighter => fighter.latest_weight_class === selectedWeightClass);
-        displayRankings(filteredFighters);
-    }
+    displayRankings(rankedFighters);
 }
 
 function displayRankings(rankedFighters) {
