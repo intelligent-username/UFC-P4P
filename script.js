@@ -43,7 +43,7 @@ function processEloHistory(data) {
         const elos = parts.slice(1).map(Number).filter(elo => !isNaN(elo)); // Convert ELOs to numbers
 
         const maxElo = Math.max(...elos); // Find the maximum ELO
-        return { fighter_name: fighterName, elo: maxElo }; // Return fighter with max ELO
+        return { fighter_name: fighterName, max_elo: maxElo }; // Return fighter with max ELO
     });
 }
 
@@ -59,7 +59,7 @@ function updateRankings() {
         rankedFighters = [...fighters].sort((a, b) => b.current_elo - a.current_elo);
     } else {
         rankingTitle.textContent = 'Historical Rankings';
-        rankedFighters = [...fightHistory].sort((a, b) => b.elo - a.elo);
+        rankedFighters = [...fightHistory].sort((a, b) => b.max_elo - a.max_elo); // Use max_elo for sorting
     }
 
     displayRankings(rankedFighters);
@@ -73,7 +73,7 @@ function displayRankings(rankedFighters) {
             <tr>
                 <td>${index + 1}</td>
                 <td>${fighter.fighter_name}</td>
-                <td>${fighter.elo.toFixed(2)}</td>
+                <td>${(fighter.current_elo || fighter.max_elo).toFixed(2)}</td>
                 <td>${metadata.latest_weight_class || 'N/A'}</td>
             </tr>
         `;
