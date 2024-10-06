@@ -37,7 +37,7 @@ async function loadData() {
 function updateRankings() {
     const rankingType = document.getElementById('ranking-type').value;
     const rankingTitle = document.getElementById('ranking-title');
-
+    const rankingBody = document.getElementById('ranking-body');
     let rankedFighters;
 
     if (rankingType === 'current') {
@@ -45,37 +45,41 @@ function updateRankings() {
         rankedFighters = [...fighters].sort((a, b) => b.current_elo - a.current_elo);
     } else {
         rankingTitle.textContent = 'Historical Rankings';
-        rankedFighters = fightHistory.reduce((acc, fight) => {
+
+        // Find maximum Elo for each fighter in the history data
+        const historicalFighterMaxElos = fightHistory.reduce((acc, fight) => {
             const existingFighter = acc.find(f => f.fighter_name === fight.fighter_name);
-            if (!existingFighter || fight.elo > existingFighter.elo) {
-                if (existingFighter) {
-                    existingFighter.elo = fight.elo;
-                } else {
-                    acc.push({ fighter_name: fight.fighter_name, elo: fight.elo });
-                }
+            const fightElo = fight.elo;
+            
+            if (!existingFighter) {
+                acc.push({ fighter_name: fight.fighter_name, elo: fightElo });
+            } else if (fightElo > existingFighter.elo) {
+                existingFighter.elo = fightElo;
             }
             return acc;
-        }, []).sort((a, b) => b.elo - a.elo);
+        }, []);
+
+        // Sort by highest Elo values
+        rankedFighters = historicalFighterMaxElos.sort((a, b) => b.elo - a.elo);
     }
 
     displayRankings(rankedFighters);
 }
 
+
 // Function to display fighters in the table
 function displayRankings(rankedFighters) {
     const rankingBody = document.getElementById('ranking-body');
-
-    // Clear the table body
     rankingBody.innerHTML = rankedFighters.slice(0, currentDisplayCount).map((fighter, index) => {
-        const metadata = fighterMetadata.find(m => m.fighter_name === fighter.fighter_name) || {};
-        const weightClass = metadata.latest_weight_class || 'N/A';
-
+        const metadata = fighterMetadata.find(m => m.fighter_name === fighter.fighter_name) || {};  // Reference to metadata
+        
+        // Ensure metadata.latest_weight_class is used correctly
         return `
             <tr>
                 <td>${index + 1}</td>
                 <td>${fighter.fighter_name}</td>
                 <td>${(fighter.current_elo || fighter.elo).toFixed(2)}</td>
-                <td>${weightClass}</td>
+                <td>${metadata.latest_weight_class || 'N/A'}</td>
             </tr>
         `;
     }).join('');
@@ -83,7 +87,12 @@ function displayRankings(rankedFighters) {
     updateLoadMoreButton(rankedFighters.length);
 }
 
-// Show/hide the "Load More" button depending on the number of fighters displayed
+function loadMore() {
+    currentDisplayCount += 20;  // Increase display count
+    updateRankings();  // Call function to refresh the display
+}
+
+// Make sure the button is visible only when necessary
 function updateLoadMoreButton(totalFighters) {
     const loadMoreButton = document.getElementById('load-more');
     if (currentDisplayCount < totalFighters) {
@@ -91,12 +100,6 @@ function updateLoadMoreButton(totalFighters) {
     } else {
         loadMoreButton.style.display = 'none';
     }
-}
-
-// Function to load more fighters when "Load More" button is clicked
-function loadMore() {
-    currentDisplayCount += 20;  // Load 20 more fighters
-    updateRankings();
 }
 
 // Event listeners for when the page loads
