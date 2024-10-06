@@ -1,11 +1,10 @@
 # UFC Pound For Pound Rankings
 
-## Rankings Made Scinetifically Based on all Previous fights, performance metrics, etc
+## Rankings Made Scientifically Based on all Previous fights, performance metrics, etc
 
-### Currently being Developed
+Features:
 
 - Overall Rankings
-- Sort by weight class, etc.
-- Peak elo
-- And More
-(Coming Very Soon)
+- Historical Rankings (peak all time)
+
+Visist [https://intelligent-username.github.io/UFC-P4P/] to use
