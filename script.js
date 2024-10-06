@@ -1,7 +1,8 @@
 let fighters = [];
 let fightHistory = [];
 let fighterMetadata = [];
-let currentDisplayCount = 50;
+let currentDisplayCount = 50; // Start with 50 fighters to display
+let additionalDisplayCount = 20; // Initial additional count for Load More button
 
 async function loadData() {
     try {
@@ -35,18 +36,24 @@ async function loadData() {
 }
 
 function processEloHistory(data) {
-    const lines = data.split('\n').filter(line => line.trim());
-    const historicalElos = [];
+    const lines = data.split('\n').filter(line => line.trim()); // Remove empty lines
+    const eloMap = new Map(); // Use a map to store max Elo for each fighter
 
     lines.forEach(line => {
         const parts = line.split(',').map(item => item.trim());
-        const fighterName = parts[0];
-        const elos = parts.slice(1).map(Number).filter(elo => !isNaN(elo));
-        const maxElo = Math.max(...elos);
-        historicalElos.push({ fighter_name: fighterName, max_elo: maxElo });
+        const fighterName = parts[0]; // Fighter's name is the first part
+        const elos = parts.slice(1).map(Number).filter(elo => !isNaN(elo)); // Convert ELOs to numbers
+
+        const maxElo = Math.max(...elos); // Find the maximum ELO
+
+        // Update the map with the maximum Elo
+        if (!eloMap.has(fighterName) || maxElo > eloMap.get(fighterName)) {
+            eloMap.set(fighterName, maxElo);
+        }
     });
 
-    return historicalElos;
+    // Convert the map to an array of objects for easy processing later
+    return Array.from(eloMap, ([fighter_name, max_elo]) => ({ fighter_name, max_elo }));
 }
 
 function updateRankings() {
@@ -61,8 +68,7 @@ function updateRankings() {
         rankedFighters = [...fighters].sort((a, b) => b.current_elo - a.current_elo);
     } else {
         rankingTitle.textContent = 'Historical Rankings';
-        const historicalElos = processEloHistory(historyData);
-        rankedFighters = historicalElos.sort((a, b) => b.max_elo - a.max_elo);
+        rankedFighters = [...fightHistory].sort((a, b) => b.max_elo - a.max_elo); // Sort by max_elo
     }
 
     displayRankings(rankedFighters);
@@ -70,6 +76,7 @@ function updateRankings() {
 
 function displayRankings(rankedFighters) {
     const rankingBody = document.getElementById('ranking-body');
+
     rankingBody.innerHTML = rankedFighters.slice(0, currentDisplayCount).map((fighter, index) => {
         const metadata = fighterMetadata.find(m => m.fighter_name === fighter.fighter_name) || {};
         return `
@@ -95,14 +102,16 @@ function updateLoadMoreButton(totalFighters) {
 }
 
 function loadMore() {
-    currentDisplayCount += 20;
+    currentDisplayCount += additionalDisplayCount; // Increase the display count
+    additionalDisplayCount = Math.ceil(additionalDisplayCount * 1.5); // Increase the additional count by 50%
     updateRankings();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     loadData();
     document.getElementById('ranking-type').addEventListener('change', () => {
-        currentDisplayCount = 50;
+        currentDisplayCount = 50; // Reset to initial count
+        additionalDisplayCount = 20; // Reset additional count
         updateRankings();
     });
     document.getElementById('load-more').addEventListener('click', loadMore);
