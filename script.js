@@ -1,64 +1,52 @@
-let fighters = [];
-let fighterMetadata = [];
-
-document.addEventListener('DOMContentLoaded', () => {
-    loadData();
-    document.getElementById('ranking-type').addEventListener('change', () => {
-        updateRankings();
-    });
-});
-
-function updateRankings() {
-    const rankingType = document.getElementById('ranking-type').value;
-    const rankingTitle = document.getElementById('ranking-title');
-    const rankingBody = document.getElementById('ranking-body');
-
-    let rankedFighters;
-
-    if (rankingType === 'current') {
-        rankingTitle.textContent = 'Current Rankings';
-        rankedFighters = [...fighters].sort((a, b) => b.current_elo - a.current_elo);
-    } else {
-        rankingTitle.textContent = 'Historical Rankings';
-        const historicalElos = processEloHistory(historyData);
-        rankedFighters = historicalElos.sort((a, b) => b.max_elo - a.max_elo);
-    }
-
-    displayRankings(rankedFighters);
-}
-
-function displayRankings(rankedFighters) {
-    const rankingBody = document.getElementById('ranking-body');
-    rankingBody.innerHTML = rankedFighters.map((fighter, index) => {
-        const metadata = fighterMetadata.find(m => m.fighter_name === fighter.fighter_name) || {};
-        return `
-            <tr>
-                <td>${index + 1}</td>
-                <td>${fighter.fighter_name}</td>
-                <td>${(fighter.current_elo || fighter.max_elo).toFixed(2)}</td>
-                <td>${metadata.latest_weight_class || 'N/A'}</td>
-            </tr>
-        `;
-    }).join('');
-}
-
 function loadData() {
-    fetch('data/data.json')
-        .then(response => response.json())
-        .then(data => {
-            fighters = data.fighters;
-            fighterMetadata = data.fighter_metadata;
-        })
-        .catch(error => console.error('Error loading data:', error));
+    const fighterCsvUrl = 'fighters.csv';
+    const metadataCsvUrl = 'fighter_metadata.csv';
+    const eloHistoryUrl = 'elo_history.txt';
+
+    Promise.all([
+        fetch(fighterCsvUrl).then(response => response.text()),
+        fetch(metadataCsvUrl).then(response => response.text()),
+        fetch(eloHistoryUrl).then(response => response.text())
+    ]).then(([fightersCsv, metadataCsv, eloHistory]) => {
+        const fighters = parseCsv(fightersCsv);
+        const fighterMetadata = parseCsv(metadataCsv);
+        const eloHistoryData = parseEloHistory(eloHistory);
+
+        // Merge the data
+        const mergedData = fighters.map(fighter => {
+            const metadata = fighterMetadata.find(m => m.fighter_name === fighter.fighter_name);
+            const eloHistory = eloHistoryData.find(h => h.fighter_name === fighter.fighter_name);
+            return { ...fighter, ...metadata, ...eloHistory };
+        });
+
+        // Update the global variables
+        fighters = mergedData;
+        fighterMetadata = mergedData;
+    }).catch(error => {
+        console.error('Error loading data:', error);
+        alert('Error loading data. Please try again.');
+    });
 }
 
-function processEloHistory(history) {
-    return history.map(entry => {
-        const fighter = fighters.find(f => f.fighter_name === entry.fighter_name);
+function parseCsv(csvText) {
+    const rows = csvText.split('\n');
+    const headers = rows.shift().split(',');
+    return rows.map(row => {
+        const values = row.split(',');
+        return headers.reduce((obj, header, index) => {
+            obj[header] = values[index];
+            return obj;
+        }, {});
+    });
+}
+
+function parseEloHistory(eloHistoryText) {
+    const rows = eloHistoryText.split('\n');
+    return rows.map(row => {
+        const values = row.split(',');
         return {
-            fighter_name: fighter.fighter_name,
-            max_elo: fighter.current_elo,
-            date: entry.date
+            fighter_name: values.shift(),
+            elos: values.map(Number)
         };
     });
 }
