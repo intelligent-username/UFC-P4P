@@ -48,10 +48,12 @@ function processEloHistory(data) {
 
     return historicalElos;
 }
+
 function updateRankings() {
     const rankingType = document.getElementById('ranking-type').value;
     const rankingTitle = document.getElementById('ranking-title');
     const rankingBody = document.getElementById('ranking-body');
+    const weightClassSelect = document.getElementById('weight-class-select');
 
     let rankedFighters;
 
@@ -64,7 +66,15 @@ function updateRankings() {
         rankedFighters = historicalElos.sort((a, b) => b.max_elo - a.max_elo);
     }
 
-    displayRankings(rankedFighters);
+    // Display all weight classes by default
+    const selectedWeightClass = weightClassSelect.value;
+    if (selectedWeightClass === 'all') {
+        displayRankings(rankedFighters);
+    } else {
+        // Filter by selected weight class
+        const filteredFighters = rankedFighters.filter(fighter => fighter.latest_weight_class === selectedWeightClass);
+        displayRankings(filteredFighters);
+    }
 }
 
 function displayRankings(rankedFighters) {
