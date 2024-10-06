@@ -24,17 +24,17 @@
                 <th>Weight Class</th>
             </tr>
         </thead>
-        <label for="weight-class-select">Filter by Weight Class:</label>
-        <select id="weight-class-select" onchange="updateRankings()">
-            <option value="all">All</option>
-            <option value="Flyweight">Flyweight</option>
-            <option value="Bantamweight">Bantamweight</option>
-            <!-- Add options for other weight classes -->
-        </select>        
         <tbody id="ranking-body">
             <!-- Rows will be dynamically generated here -->
         </tbody>
     </table>
+    <label for="weight-class-select">Filter by Weight Class:</label>
+    <select id="weight-class-select" onchange="updateRankings()">
+        <option value="all">All</option>
+        <option value="Flyweight">Flyweight</option>
+        <option value="Bantamweight">Bantamweight</option>
+        <!-- Add options for other weight classes -->
+    </select>
     <button id="load-more">Load More</button>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <script src="script.js"></script>
