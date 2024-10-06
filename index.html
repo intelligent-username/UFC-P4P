@@ -4,38 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fighter Rankings</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-        }
-        #rankings-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        #rankings-table th, #rankings-table td {
-            border: 1px solid #ddd;
-            padding: 8px;
-        }
-        #rankings-table th {
-            background-color: #f2f2f2;
-        }
-        #filter-dropdown {
-            margin-bottom: 20px;
-        }
-    </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-
     <h1>Fighter Rankings</h1>
-
-    <!-- Dropdown for filtering rankings -->
-    <select id="filter-dropdown">
+    <label for="ranking-type">Select Ranking Type:</label>
+    <select id="ranking-type">
         <option value="current">Current Rankings</option>
         <option value="historical">Historical Rankings</option>
     </select>
-
-    <!-- Table to display rankings -->
-    <table id="rankings-table">
+    <h2 id="ranking-title">Current Rankings</h2>
+    <table id="ranking-table">
         <thead>
             <tr>
                 <th>Rank</th>
@@ -44,54 +23,11 @@
                 <th>Weight Class</th>
             </tr>
         </thead>
-        <tbody>
-            <!-- Rows will be populated by JavaScript -->
+        <tbody id="ranking-body">
+            <!-- Rows will be dynamically generated here -->
         </tbody>
     </table>
-
-    <script>
-        // Example fighter data (could be fetched from a CSV or API)
-        const rankingsData = {
-            "current": [
-                { rank: 1, name: "Fighter A", elo: 2400, weightClass: "Heavyweight" },
-                { rank: 2, name: "Fighter B", elo: 2300, weightClass: "Middleweight" },
-                { rank: 3, name: "Fighter C", elo: 2200, weightClass: "Lightweight" }
-            ],
-            "historical": [
-                { rank: 1, name: "Fighter D", elo: 2500, weightClass: "Heavyweight" },
-                { rank: 2, name: "Fighter E", elo: 2400, weightClass: "Middleweight" },
-                { rank: 3, name: "Fighter F", elo: 2300, weightClass: "Lightweight" }
-            ]
-        };
-
-        // Function to update the table based on the selected filter
-        function updateTable(filter) {
-            const tableBody = document.querySelector('#rankings-table tbody');
-            tableBody.innerHTML = ''; // Clear previous table data
-
-            const selectedRankings = rankingsData[filter];
-
-            selectedRankings.forEach(fighter => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${fighter.rank}</td>
-                    <td>${fighter.name}</td>
-                    <td>${fighter.elo}</td>
-                    <td>${fighter.weightClass}</td>
-                `;
-                tableBody.appendChild(row);
-            });
-        }
-
-        // Add event listener to the dropdown
-        document.getElementById('filter-dropdown').addEventListener('change', function () {
-            const selectedFilter = this.value;
-            updateTable(selectedFilter);
-        });
-
-        // Initialize table with current rankings on page load
-        window.onload = () => updateTable('current');
-    </script>
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
