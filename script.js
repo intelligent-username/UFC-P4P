@@ -8,7 +8,7 @@ async function loadData() {
         const [fightersResponse, metadataResponse, historyResponse] = await Promise.all([
             fetch('fighters.csv'),
             fetch('fighter_metadata.csv'),
-            fetch('elo_history.txt') // Treating elo history as a .txt file
+            fetch('elo_history.txt') // Fetching the elo history as a text file
         ]);
 
         if (!fightersResponse.ok || !metadataResponse.ok || !historyResponse.ok) {
@@ -23,10 +23,10 @@ async function loadData() {
 
         fighters = Papa.parse(fightersData, { header: true, dynamicTyping: true }).data;
         fighterMetadata = Papa.parse(metadataData, { header: true, dynamicTyping: true }).data;
-        
+
         // Process elo_history.txt manually
         fightHistory = processEloHistory(historyData);
-        
+
         updateRankings();
     } catch (error) {
         console.error('Error loading data:', error);
@@ -35,13 +35,15 @@ async function loadData() {
 }
 
 function processEloHistory(data) {
-    const lines = data.split('\n').filter(line => line.trim()); // Remove any empty lines
+    const lines = data.split('\n').filter(line => line.trim()); // Remove empty lines
+
     return lines.map(line => {
-        const parts = line.split(',');
-        const fighterName = parts[0].trim();
-        const elos = parts.slice(1).map(Number); // Get all ELOs as numbers
-        const maxElo = Math.max(...elos); // Find the maximum ELO for the fighter
-        return { fighter_name: fighterName, elo: maxElo };
+        const parts = line.split(',').map(item => item.trim());
+        const fighterName = parts[0]; // Fighter's name is the first part
+        const elos = parts.slice(1).map(Number).filter(elo => !isNaN(elo)); // Convert ELOs to numbers
+
+        const maxElo = Math.max(...elos); // Find the maximum ELO
+        return { fighter_name: fighterName, elo: maxElo }; // Return fighter with max ELO
     });
 }
 
@@ -57,7 +59,7 @@ function updateRankings() {
         rankedFighters = [...fighters].sort((a, b) => b.current_elo - a.current_elo);
     } else {
         rankingTitle.textContent = 'Historical Rankings';
-        rankedFighters = fightHistory.sort((a, b) => b.elo - a.elo);
+        rankedFighters = [...fightHistory].sort((a, b) => b.elo - a.elo);
     }
 
     displayRankings(rankedFighters);
@@ -71,7 +73,7 @@ function displayRankings(rankedFighters) {
             <tr>
                 <td>${index + 1}</td>
                 <td>${fighter.fighter_name}</td>
-                <td>${(fighter.current_elo || fighter.elo).toFixed(2)}</td>
+                <td>${fighter.elo.toFixed(2)}</td>
                 <td>${metadata.latest_weight_class || 'N/A'}</td>
             </tr>
         `;
