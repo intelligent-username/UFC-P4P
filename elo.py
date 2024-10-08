@@ -9,13 +9,22 @@ K_FACTOR = 30
 BONUS_KO_SUB = 0.15
 ROUND_BONUS = 0.02
 
-# Read the most recent fight date from file
-def get_most_recent_date():
+# Read the most recent fight date and line number from file
+def get_most_recent_date_and_line():
     try:
         with open('latest_fight.txt', 'r') as f:
-            return datetime.strptime(f.read().strip(), "%d-%m-%Y")
+            lines = f.readlines()
+            most_recent_date = datetime.strptime(lines[0].strip(), "%d-%m-%Y")
+            most_recent_line = int(lines[1].strip())
+            return most_recent_date, most_recent_line
     except FileNotFoundError:
-        return datetime.min  # If no record, return very early date
+        return datetime.min, 0  # If no record, return very early date and line 0
+
+# Update the most recent fight date and line number
+def update_most_recent_date_and_line(date, line):
+    with open('latest_fight.txt', 'w') as f:
+        f.write(date.strftime("%d-%m-%Y") + '\n')
+        f.write(str(line) + '\n')
 
 # Update the most recent fight date
 def update_most_recent_date(date):
@@ -119,20 +128,26 @@ def update_elo(fighter_1_elo, fighter_2_elo, result, method, fight_round):
     
     return round(fighter_1_new_elo, 2), round(fighter_2_new_elo, 2)
 
-# Process fights from CSV, only after the most recent fight
+# Process fights from CSV, starting from the latest processed line
 def process_fights(csv_file):
-    most_recent_date = get_most_recent_date()
+    most_recent_date, most_recent_line = get_most_recent_date_and_line()
     fighters = load_fighters()
     latest_fight_date = most_recent_date  # To track the newest fight processed
+    current_line = 0  # Line tracker
 
     with open(csv_file, 'r', newline='', encoding='utf-8') as csvfile:
         reader = csv.DictReader(csvfile)
         
         for row in reader:
+            current_line += 1
+            
+            # Skip until we reach the line after the last processed one
+            if current_line <= most_recent_line:
+                continue
+            
             fight_date = datetime.strptime(row['date'], "%d-%m-%Y")
-            if fight_date <= most_recent_date:
-                continue  # Skip fights already processed
-
+            
+            # Update fighter data and Elo ratings
             fighter_1, fighter_2 = row['fighter_1'], row['fighter_2']
             result, method, fight_round = row['result'], row['method'], row['round']
             gender, weight_class = row['gender'], row['weight_class']
@@ -148,11 +163,9 @@ def process_fights(csv_file):
             fighters[fighter_1] = fighter_1_new_elo
             fighters[fighter_2] = fighter_2_new_elo
             
-            # Update Elo history
+            # Update Elo history and metadata
             update_elo_history(fighter_1, fighter_1_new_elo)
             update_elo_history(fighter_2, fighter_2_new_elo)
-            
-            # Update metadata (gender, weight class)
             update_fighter_metadata(fighter_1, gender, weight_class)
             update_fighter_metadata(fighter_2, gender, weight_class)
 
@@ -163,13 +176,12 @@ def process_fights(csv_file):
     # Save updated fighter Elos
     save_fighters(fighters)
 
-    # Update most recent fight date
+    # Update most recent fight date and line number
     if latest_fight_date > most_recent_date:
-        update_most_recent_date(latest_fight_date)
-
+        update_most_recent_date_and_line(latest_fight_date, current_line)
 
 # Main execution
 if __name__ == "__main__":
-    print("Note: This will take a while to run")
+    print("Note: This will take a while to run for the first time")
     process_fights('fights.csv')
     print("Elo ratings updated successfully.")

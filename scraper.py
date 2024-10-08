@@ -82,7 +82,7 @@ def scrape_all_events(output_file):
                 event_date = scrape_event_date(event_url)
                 
                 # If the event date is less than or equal to the latest scraped date, stop scraping
-                if last_scraped_date and event_date <= last_scraped_date:
+                if event_date >= last_scraped_date:
                     print(f"Stopping at already scraped event: {event_name} ({event_date})")
                     has_more_pages = False
                     break  # Stop scraping if we reach an event we've already scraped
