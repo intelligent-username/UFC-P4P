@@ -1,16 +1,23 @@
 import csv
-import math
 import os
 from datetime import datetime
 
-# Initialize constants
+# Initial Constants
 INITIAL_ELO = 500
 K_FACTOR = 30
 BONUS_KO_SUB = 0.15
 ROUND_BONUS = 0.02
 
-# Read the most recent fight date and line number from file
+# Docstrings added but probably unnecessary :D
 def get_most_recent_date_and_line():
+    """
+    Find the most recent fight date and most recent line number in fights.csv
+    BY LOOKING AT 'latest_fight.txt'.
+    
+    Returns:
+        tuple: (datetime object of most recent date, int of most recent line number)
+    """
+
     try:
         with open('latest_fight.txt', 'r') as f:
             lines = f.readlines()
@@ -20,19 +27,32 @@ def get_most_recent_date_and_line():
     except FileNotFoundError:
         return datetime.min, 0  # If no record, return very early date and line 0
 
-# Update the most recent fight date and line number
 def update_most_recent_date_and_line(date, line):
+    """
+    Update 'latest_fight.txt' with the most recent fight date and line number.
+    
+    Args:
+        date (datetime): The date of the most recent fight.
+        line (int): The line number of the most recent fight in the CSV.
+    
+    """
+
     with open('latest_fight.txt', 'w') as f:
         f.write(date.strftime("%d-%m-%Y") + '\n')
         f.write(str(line) + '\n')
 
-# Update the most recent fight date
 def update_most_recent_date(date):
     with open('latest_fight.txt', 'w') as f:
         f.write(date.strftime("%d-%m-%Y"))
 
-# Function to load fighter Elos into memory
 def load_fighters():
+    """
+    Load fighter Elo ratings from 'fighters.csv'.
+    
+    Returns:
+        dict: A dictionary with fighter names as keys and their Elo ratings as values.
+    """
+
     fighters = {}
     try:
         with open('fighters.csv', 'r', newline='') as csvfile:
@@ -43,8 +63,14 @@ def load_fighters():
         pass
     return fighters
 
-# Function to save fighter Elos back to file
 def save_fighters(fighters):
+    """
+    Save fighter Elo ratings to 'fighters.csv'.
+    
+    Args:
+        fighters (dict): A dictionary with fighter names as keys and their Elo ratings as values.
+    """
+
     with open('fighters.csv', 'w', newline='') as csvfile:
         fieldnames = ['fighter_name', 'current_elo']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
@@ -52,9 +78,16 @@ def save_fighters(fighters):
         for fighter, elo in fighters.items():
             writer.writerow({'fighter_name': fighter, 'current_elo': elo})
 
-# Function to update Elo history
 def update_elo_history(fighter_name, new_elo, history_file='elo_history.txt'):
-    # Note: Might be confused with elo_history.csv (NONEXISTENT) if there's some mistake in the future
+    """
+    Update the Elo history for a fighter in 'elo_history.txt'.
+    
+    Args:
+        fighter_name (str): The name of the fighter.
+        new_elo (float): The new Elo rating for the fighter.
+        history_file (str, optional): The file to store Elo history. Defaults to 'elo_history.txt'.
+    """
+
     history_data = {}
     
     # Read current history data
@@ -79,8 +112,17 @@ def update_elo_history(fighter_name, new_elo, history_file='elo_history.txt'):
         for fighter, elos in history_data.items():
             writer.writerow([fighter] + elos)
             
-# Function to update metadata
 def update_fighter_metadata(fighter_name, gender, weight_class):
+    """
+    Update or add metadata for a fighter in 'fighter_metadata.csv'.
+    In case of weight class change
+
+    Args:
+        fighter_name (str): The name of the fighter.
+        gender (str): The gender of the fighter.
+        weight_class (str): The weight class of the fighter.
+    """
+
     metadata = []
     updated = False
 
@@ -107,12 +149,36 @@ def update_fighter_metadata(fighter_name, gender, weight_class):
         writer.writeheader()
         writer.writerows(metadata)
 
-# Calculate expected score based on Elo difference
 def expected_score(elo_a, elo_b):
+    """
+    Use the Formula: 1 / (1 + 10 ** ((elo_b - elo_a) / 400)) 
+    & Calculate the expected score based on Elo difference.
+    
+    Args:
+        elo_a (float): Elo rating of fighter A.
+        elo_b (float): Elo rating of fighter B.
+    
+    Returns:
+        float: The expected score for fighter A.
+    """
+
     return 1 / (1 + 10 ** ((elo_b - elo_a) / 400))
 
-# Function to update Elo
 def update_elo(fighter_1_elo, fighter_2_elo, result, method, fight_round):
+    """
+    Update Elo ratings for two fighters based on fight result.
+    
+    Args:
+        fighter_1_elo (float): Current Elo rating of fighter 1.
+        fighter_2_elo (float): Current Elo rating of fighter 2.
+        result (str): The result of the fight ('win', 'loss', or 'draw').
+        method (str): The method of victory (e.g., 'KO', 'TKO', 'SUB', 'DEC').
+        fight_round (str): The round in which the fight ended.
+    
+    Returns:
+        tuple: (new_elo_fighter_1, new_elo_fighter_2)
+    """
+        
     expected_1 = expected_score(fighter_1_elo, fighter_2_elo)
     
     score_1 = 1 if result == 'win' else 0.5 if result == 'draw' else 0
@@ -128,8 +194,14 @@ def update_elo(fighter_1_elo, fighter_2_elo, result, method, fight_round):
     
     return round(fighter_1_new_elo, 2), round(fighter_2_new_elo, 2)
 
-# Process fights from CSV, starting from the latest processed line
 def process_fights(csv_file):
+    """
+    Process fights from a CSV file and update Elo ratings.
+    
+    Args:
+        csv_file (str): Path to the CSV file containing fight data.
+    """
+
     most_recent_date, most_recent_line = get_most_recent_date_and_line()
     fighters = load_fighters()
     latest_fight_date = most_recent_date  # To track the newest fight processed
@@ -180,8 +252,13 @@ def process_fights(csv_file):
     if latest_fight_date > most_recent_date:
         update_most_recent_date_and_line(latest_fight_date, current_line)
 
-# Main execution
+# Run
 if __name__ == "__main__":
-    print("Note: This will take a while to run for the first time")
+
+    print("Updating Elo ratings...")
+
+    print("(Note: This will take a while to run for the first time)")
+
     process_fights('fights.csv')
+
     print("Elo ratings updated successfully.")

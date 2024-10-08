@@ -11,21 +11,25 @@ MONTHS = {
 }
 
 # Get the HTML of a given page number
-def get_page_html(page_number):
-    url = base_url + str(page_number)
+def get_page_html(page_num):
+    
+    url = base_url + str(page_num)
     response = requests.get(url)
     return BeautifulSoup(response.content, "html.parser")
 
 # Clean method field from newlines and extra spaces
 def clean_method(method_text):
+
     return ' '.join(method_text.split())
 
 # Infer gender based on weight class
 def infer_gender(weight_class):
+
     return 'Female' if "Women's" in weight_class else 'Male'
 
 # Scrape event date
 def scrape_event_date(event_url):
+
     response = requests.get(event_url)
     soup = BeautifulSoup(response.content, "html.parser")
     date_tag = soup.find("li", class_="b-list__box-list-item")
@@ -48,6 +52,7 @@ def convert_date_to_dd_mm_yyyy(date_str):
 
 # Get the latest date from the last row of the existing CSV file
 def get_latest_scraped_date(output_file):
+
     if os.path.exists(output_file):
         try:
             with open(output_file, 'r', newline='', encoding='utf-8') as csvfile:
@@ -62,14 +67,15 @@ def get_latest_scraped_date(output_file):
     return None
 
 def scrape_all_events(output_file):
-    page_number = 1
+
+    page_num = 1
     has_more_pages = True
     last_scraped_date = get_latest_scraped_date(output_file)
     
-    temp_data = []  # Temporary list to hold new scraped data
+    temp_data = []  # Temporary list to hold *new scraped data
 
     while has_more_pages:
-        soup = get_page_html(page_number)
+        soup = get_page_html(page_num)
         event_list = soup.find_all("a", class_="b-link b-link_style_black")
         
         if not event_list:
@@ -90,7 +96,7 @@ def scrape_all_events(output_file):
                 print(f"Scraping event: {event_name} ({event_date})")
                 temp_data.extend(scrape_event(event_name, event_url, event_date))  # Collect data for this event
 
-            page_number += 1
+            page_num += 1
             time.sleep(1)  # Optional delay to avoid overloading the server
 
     # Append the new scraped data to the existing CSV file
@@ -100,6 +106,7 @@ def scrape_all_events(output_file):
 
 # Scrape each event and return the fight details as a list of dicts
 def scrape_event(event_name, event_url, event_date):
+    
     event_response = requests.get(event_url)
     event_soup = BeautifulSoup(event_response.content, "html.parser")
     
@@ -136,19 +143,22 @@ def scrape_event(event_name, event_url, event_date):
 
                 fights.append(fight_details)
 
-    return fights  # Return the collected fight details
+    return fights  # Return collected fight details
 
 # Append new data to the existing CSV file
 def append_to_csv(output_file, new_data):
+    
     with open(output_file, 'a', newline='', encoding='utf-8') as csvfile:
         fieldnames = ["event", "fighter_1", "fighter_2", "result", "method", "round", "time", "weight_class", "gender", "date"]
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
-        if os.stat(output_file).st_size == 0:  # If file is empty, write the header first
+        if os.stat(output_file).st_size == 0:  # If file is empty, write header first
             writer.writeheader()
 
         # Write all new fights
         writer.writerows(new_data)
 
 if __name__ == "__main__":
+
     scrape_all_events('fights.csv')
+    print("Finished, Success")

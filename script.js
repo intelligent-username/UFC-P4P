@@ -10,11 +10,11 @@ async function loadData() {
         const [fightersResponse, metadataResponse, historyResponse] = await Promise.all([
             fetch('fighters.csv'),
             fetch('fighter_metadata.csv'),
-            fetch('elo_history.txt') // Fetching the elo history as a text file
+            fetch('elo_history.txt') // Fetch the elo history as a txt file
         ]);
 
         if (!fightersResponse.ok || !metadataResponse.ok || !historyResponse.ok) {
-            throw new Error('Failed to fetch files');
+            throw new Error('Failed to fetch files. Why were they deleted??');
         }
 
         const [fightersData, metadataData, historyData] = await Promise.all([
@@ -29,7 +29,7 @@ async function loadData() {
         // Process elo_history.txt manually
         fightHistory = processEloHistory(historyData);
 
-        // Extract unique weight classes from metadata and update dropdown
+        // Extract unique weight classes from metadata & update dropdown
         weightClasses = Array.from(new Set(fighterMetadata.map(f => f.latest_weight_class))).filter(Boolean);
         populateWeightClassDropdown();
 
