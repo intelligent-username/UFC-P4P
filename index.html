@@ -3,17 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fighter Rankings</title>
+    <title>Simple Pound-For-Pound Rankings</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <h1>Fighter Rankings</h1>
+    <h1>All-Time Pound-For-Pound Rankings</h1>
     <p>Initial Elo for all fighters: 500</p>
+
+    <!-- Existing ranking type selection -->
     <label for="ranking-type">Select Ranking Type:</label>
     <select id="ranking-type">
         <option value="current">Current Rankings</option>
         <option value="historical">Historical Rankings</option>
     </select>
+
+    <!-- New weight class filter dropdown -->
+    <label for="weight-class-filter">Filter by Weight Class:</label>
+    <select id="weight-class-filter">
+        <option value="all">All Weight Classes</option>
+        <!-- Weight class options will be dynamically populated -->
+    </select>
+
     <h2 id="ranking-title">Current Rankings</h2>
     <table id="ranking-table">
         <thead>
@@ -25,9 +35,10 @@
             </tr>
         </thead>
         <tbody id="ranking-body">
-            <!-- Rows will be dynamically generated here -->
+            <!-- Rows to be dynamically generated here -->
         </tbody>
     </table>
+
     <button id="load-more">Load More</button>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <script src="script.js"></script>

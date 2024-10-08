@@ -3,6 +3,7 @@ let fightHistory = [];
 let fighterMetadata = [];
 let currentDisplayCount = 50; // Start with 50 fighters to display
 let additionalDisplayCount = 20; // Initial additional count for Load More button
+let weightClasses = []; // To hold all unique weight classes
 
 async function loadData() {
     try {
@@ -27,6 +28,10 @@ async function loadData() {
 
         // Process elo_history.txt manually
         fightHistory = processEloHistory(historyData);
+
+        // Extract unique weight classes from metadata and update dropdown
+        weightClasses = Array.from(new Set(fighterMetadata.map(f => f.latest_weight_class))).filter(Boolean);
+        populateWeightClassDropdown();
 
         updateRankings();
     } catch (error) {
@@ -56,10 +61,20 @@ function processEloHistory(data) {
     return Array.from(eloMap, ([fighter_name, max_elo]) => ({ fighter_name, max_elo }));
 }
 
+function populateWeightClassDropdown() {
+    const dropdown = document.getElementById('weight-class-filter');
+    weightClasses.forEach(weightClass => {
+        const option = document.createElement('option');
+        option.value = weightClass;
+        option.textContent = weightClass;
+        dropdown.appendChild(option);
+    });
+}
+
 function updateRankings() {
     const rankingType = document.getElementById('ranking-type').value;
+    const weightClassFilter = document.getElementById('weight-class-filter').value;
     const rankingTitle = document.getElementById('ranking-title');
-    const rankingBody = document.getElementById('ranking-body');
 
     let rankedFighters;
 
@@ -69,6 +84,14 @@ function updateRankings() {
     } else {
         rankingTitle.textContent = 'Historical Rankings';
         rankedFighters = [...fightHistory].sort((a, b) => b.max_elo - a.max_elo); // Sort by max_elo
+    }
+
+    // Filter fighters by weight class if selected
+    if (weightClassFilter !== 'all') {
+        rankedFighters = rankedFighters.filter(fighter => {
+            const metadata = fighterMetadata.find(m => m.fighter_name === fighter.fighter_name);
+            return metadata && metadata.latest_weight_class === weightClassFilter;
+        });
     }
 
     displayRankings(rankedFighters);
@@ -110,6 +133,11 @@ function loadMore() {
 document.addEventListener('DOMContentLoaded', () => {
     loadData();
     document.getElementById('ranking-type').addEventListener('change', () => {
+        currentDisplayCount = 50; // Reset to initial count
+        additionalDisplayCount = 20; // Reset additional count
+        updateRankings();
+    });
+    document.getElementById('weight-class-filter').addEventListener('change', () => {
         currentDisplayCount = 50; // Reset to initial count
         additionalDisplayCount = 20; // Reset additional count
         updateRankings();
