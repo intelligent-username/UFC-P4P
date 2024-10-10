@@ -8,16 +8,21 @@ body {
 }
 
 h1 {
-    font-size: 36px;
+    font-size: 48px;
     font-weight: bold;
     margin-bottom: 20px;
 }
+
+h2 {
+    font-size: 28px;
+    margin-bottom: 10px;
+  }  
 
 table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 20px;
-    border: 1px solid #ddd;
+    border: 1px solid #333;
 }
 
 th, td {
@@ -45,9 +50,6 @@ th {
     background-color: #45a049;
 }
 
-#ranking-type {
-    margin-bottom: 20px;
-}
 
 label {
     display: block;
@@ -66,13 +68,17 @@ select {
     display: flex;
     justify-content: flex-start;
     align-items: center;
-    margin-bottom: 20px;
+    margin-bottom: 40px;
+    background-color: #f2f2f2; /* Add background color to filter container */
+    border: 1px solid #ddd;
+
 }
 
 .filter-item {
     display: flex;
     align-items: center;
     margin-right: 20px;
+    padding:10px;
 }
 
 .filter-item label {
@@ -81,7 +87,7 @@ select {
 }
 
 .filter-item select {
-    height: 50px; /* Adjust as needed */
+    height: 50px;
 }
 
 .sortable {

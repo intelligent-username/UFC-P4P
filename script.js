@@ -1,10 +1,10 @@
 let fighters = [];
 let fightHistory = [];
+let weightClasses = [];
 let fighterMetadata = [];
-let currentDisplayCount = 50; // Start with 50 fighters to display
+let currentDisplayCount = 50;
+let isAscending = false; // Initially descending order
 let loadingMore = false; // Flag to prevent multiple simultaneous loads
-let weightClasses = []; // To hold all unique weight classes
-let isAscending = false; // Default to descending order (set to false initially)
 
 async function loadData() {
     try {
@@ -113,14 +113,19 @@ function sortFightersByRank(fightersArray) {
 
 function displayRankings(rankedFighters) {
     const rankingBody = document.getElementById('ranking-body');
+    
+    // Calculate the total number of displayed fighters
+    const totalFighters = rankedFighters.length;
 
-    // Dynamically set the rank based on sorted order (descending or ascending)
     rankingBody.innerHTML = rankedFighters.slice(0, currentDisplayCount).map((fighter, index) => {
         const metadata = fighterMetadata.find(m => m.fighter_name === fighter.fighter_name) || {};
-        // Properly assign rank based on order in sorted array
+        
+        // Determine the rank based on whether sorting is ascending or descending
+        const rank = isAscending ? totalFighters - index : index + 1;
+
         return `
             <tr>
-                <td>${index + 1}</td> <!-- Always display rank based on array index -->
+                <td>${rank}</td> <!-- Dynamically assign rank based on sort order -->
                 <td>${fighter.fighter_name}</td>
                 <td>${(fighter.current_elo || fighter.max_elo).toFixed(2)}</td>
                 <td>${metadata.latest_weight_class || 'N/A'}</td>
@@ -141,7 +146,7 @@ function loadMore() {
 function handleScroll() {
     const scrollPosition = window.innerHeight + window.scrollY;
     const bodyHeight = document.body.offsetHeight;
-    const scrollThreshold = bodyHeight - 200; // 200px from the bottom
+    const scrollThreshold = bodyHeight - 200;  // 200px from the bottom
 
     if (scrollPosition >= scrollThreshold) {
         loadMore();
@@ -149,10 +154,10 @@ function handleScroll() {
 }
 
 function toggleSortOrder() {
-    isAscending = !isAscending; // Toggle sort order
+    isAscending = !isAscending;                                             // Toggle sort order
     const rankHeader = document.getElementById('rank-header');
-    rankHeader.innerHTML = `Rank ${isAscending ? '&#9650;' : '&#9660;'}`; // Update the rank header with arrow
-    updateRankings(); // Re-render rankings with the new sort order
+    rankHeader.innerHTML = `Rank ${isAscending ? '&#9650;' : '&#9660;'}`;   // Update the rank header with arrow
+    updateRankings();                                                       // Re-render rankings with the new sort order
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -160,15 +165,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Reset sorting and reload rankings when ranking type or weight class changes
     document.getElementById('ranking-type').addEventListener('change', () => {
-        currentDisplayCount = 50; // Reset to initial count
-        isAscending = false; // Reset to descending order
-        document.getElementById('rank-header').innerHTML = 'Rank &#9660;'; // Update the header to descending arrow
+        currentDisplayCount = 50;                                               // Reset to initial count
+        isAscending = false;                                                    // Reset to descending order
+        document.getElementById('rank-header').innerHTML = 'Rank &#9660;';      // Update the header to descending arrow
         updateRankings();
     });
     document.getElementById('weight-class-filter').addEventListener('change', () => {
-        currentDisplayCount = 50; // Reset to initial count
-        isAscending = false; // Reset to descending order
-        document.getElementById('rank-header').innerHTML = 'Rank &#9660;'; // Update the header to descending arrow
+        currentDisplayCount = 50;                                                  // Reset to initial count
+        isAscending = false;                                                       // Reset to descending order
+        document.getElementById('rank-header').innerHTML = 'Rank &#9660;';         // Update the header to descending arrow
         updateRankings();
     });
 

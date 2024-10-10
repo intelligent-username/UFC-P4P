@@ -1,48 +1,43 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Pound-For-Pound Rankings</title>
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simple Pound-For-Pound Rankings</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <h1>All-Time Pound-For-Pound Rankings</h1>
-    <p>Initial Elo for all fighters: 500</p>
+  <h1>All-Time Pound-For-Pound Rankings</h1>
+  <p>Initial Elo for all fighters: 500</p>
 
-    <div class="filter-container">
-        <div class="filter-item">
-            <label for="ranking-type">Ranking Type:</label>
-            <select id="ranking-type">
-                <option value="current">Current</option>
-                <option value="historical">Historical</option>
-            </select>
-        </div>
-        <div class="filter-item">
-            <label for="weight-class-filter">Weight Class:</label>
-            <select id="weight-class-filter">
-                <option value="all">All</option>
-                <!-- Weight class options will be dynamically populated -->
-            </select>
-        </div>
-    </div>
+  <fieldset class="filter-container">
+    <legend>Filter Rankings</legend>
+    <select id="ranking-type">
+      <option value="current">Current</option>
+      <option value="historical">Historical</option>
+    </select>
+    <select id="weight-class-filter">
+      <option value="all">All</option>
+      <!-- Weight class options will be dynamically populated -->
+    </select>
+  </fieldset>
 
-    <h2 id="ranking-title">Current Rankings</h2>
-    <table id="ranking-table">
-        <thead>
-            <tr>
-                <th id="rank-header" class="sortable">Rank &#9660;</th>
-                <th>Name</th>
-                <th>Elo</th>
-                <th>Weight Class</th>
-            </tr>
-        </thead>
-        <tbody id="ranking-body">
-            <!-- Rows to be dynamically generated here -->
-        </tbody>
-    </table>
+  <h2 id="ranking-title">Current Rankings</h2>
+  <table id="ranking-table">
+    <thead>
+      <tr>
+        <th id="rank-header" class="sortable" aria-label="Rank">Rank &#9660;</th>
+        <th>Name</th>
+        <th>Elo</th>
+        <th>Weight Class</th>
+      </tr>
+    </thead>
+    <tbody id="ranking-body">
+      <!-- Rows to be dynamically generated here -->
+    </tbody>
+  </table>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
-    <script src="script.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>

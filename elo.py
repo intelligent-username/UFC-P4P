@@ -1,14 +1,13 @@
-import csv
 import os
+import csv
 from datetime import datetime
 
-# Initial Constants
-INITIAL_ELO = 500
+# Important Constants
 K_FACTOR = 30
-BONUS_KO_SUB = 0.15
+INITIAL_ELO = 500
 ROUND_BONUS = 0.02
+BONUS_KO_SUB = 0.15
 
-# Docstrings added but probably unnecessary :D
 def get_most_recent_date_and_line():
     """
     Find the most recent fight date and most recent line number in fights.csv
@@ -42,6 +41,12 @@ def update_most_recent_date_and_line(date, line):
         f.write(str(line) + '\n')
 
 def update_most_recent_date(date):
+    """
+    Update 'latest_fight.txt' with the most recent fight date.
+    
+    Args:
+        date (datetime): The date of the most recent fight.
+    """
     with open('latest_fight.txt', 'w') as f:
         f.write(date.strftime("%d-%m-%Y"))
 
@@ -213,7 +218,7 @@ def process_fights(csv_file):
         for row in reader:
             current_line += 1
             
-            # Skip until we reach the line after the last processed one
+            # Keep skipping until we reach the line after the last processed one
             if current_line <= most_recent_line:
                 continue
             

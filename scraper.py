@@ -1,8 +1,8 @@
-import requests
-from bs4 import BeautifulSoup
+import os
 import csv
 import time
-import os
+import requests
+from bs4 import BeautifulSoup
 
 base_url = "http://ufcstats.com/statistics/events/completed?page="
 MONTHS = {
@@ -38,7 +38,7 @@ def scrape_event_date(event_url):
         raw_date = date_tag.text.strip().replace("Date:", "").strip()
         return convert_date_to_dd_mm_yyyy(raw_date)
     
-    return "Unknown"
+    return "Unknown" # Should never be reached !! Else find another data source
 
 # Convert date to DD-MM-YYYY format
 def convert_date_to_dd_mm_yyyy(date_str):
@@ -91,13 +91,14 @@ def scrape_all_events(output_file):
                 if event_date >= last_scraped_date:
                     print(f"Stopping at already scraped event: {event_name} ({event_date})")
                     has_more_pages = False
-                    break  # Stop scraping if we reach an event we've already scraped
+                    break
                 
                 print(f"Scraping event: {event_name} ({event_date})")
                 temp_data.extend(scrape_event(event_name, event_url, event_date))  # Collect data for this event
 
             page_num += 1
-            time.sleep(1)  # Optional delay to avoid overloading the server
+            time.sleep(1)  # Delay to avoid overloading the server
+                            # Get rid of this if script is taking too long
 
     # Append the new scraped data to the existing CSV file
     if temp_data:
