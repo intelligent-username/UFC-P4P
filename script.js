@@ -2,8 +2,9 @@ let fighters = [];
 let fightHistory = [];
 let fighterMetadata = [];
 let currentDisplayCount = 50; // Start with 50 fighters to display
-let additionalDisplayCount = 20; // Initial additional count for Load More button
+let loadingMore = false; // Flag to prevent multiple simultaneous loads
 let weightClasses = []; // To hold all unique weight classes
+let isAscending = false; // Default to descending order (set to false initially)
 
 async function loadData() {
     try {
@@ -94,17 +95,32 @@ function updateRankings() {
         });
     }
 
+    // Sort fighters based on rank order
+    rankedFighters = sortFightersByRank(rankedFighters);
+
     displayRankings(rankedFighters);
+}
+
+function sortFightersByRank(fightersArray) {
+    // Sort the fighters based on rank (descending by default)
+    fightersArray.sort((a, b) => {
+        const rankA = a.current_elo || a.max_elo;
+        const rankB = b.current_elo || b.max_elo;
+        return isAscending ? rankA - rankB : rankB - rankA;
+    });
+    return fightersArray;
 }
 
 function displayRankings(rankedFighters) {
     const rankingBody = document.getElementById('ranking-body');
 
+    // Dynamically set the rank based on sorted order (descending or ascending)
     rankingBody.innerHTML = rankedFighters.slice(0, currentDisplayCount).map((fighter, index) => {
         const metadata = fighterMetadata.find(m => m.fighter_name === fighter.fighter_name) || {};
+        // Properly assign rank based on order in sorted array
         return `
             <tr>
-                <td>${index + 1}</td>
+                <td>${index + 1}</td> <!-- Always display rank based on array index -->
                 <td>${fighter.fighter_name}</td>
                 <td>${(fighter.current_elo || fighter.max_elo).toFixed(2)}</td>
                 <td>${metadata.latest_weight_class || 'N/A'}</td>
@@ -112,35 +128,52 @@ function displayRankings(rankedFighters) {
         `;
     }).join('');
 
-    updateLoadMoreButton(rankedFighters.length);
-}
-
-function updateLoadMoreButton(totalFighters) {
-    const loadMoreButton = document.getElementById('load-more');
-    if (currentDisplayCount < totalFighters) {
-        loadMoreButton.style.display = 'block';
-    } else {
-        loadMoreButton.style.display = 'none';
-    }
+    loadingMore = false;
 }
 
 function loadMore() {
-    currentDisplayCount += additionalDisplayCount; // Increase the display count
-    additionalDisplayCount = Math.ceil(additionalDisplayCount * 1.5); // Increase the additional count by 50%
+    if (loadingMore) return;
+    loadingMore = true;
+    currentDisplayCount += 20; // Increase the display count by 20
     updateRankings();
+}
+
+function handleScroll() {
+    const scrollPosition = window.innerHeight + window.scrollY;
+    const bodyHeight = document.body.offsetHeight;
+    const scrollThreshold = bodyHeight - 200; // 200px from the bottom
+
+    if (scrollPosition >= scrollThreshold) {
+        loadMore();
+    }
+}
+
+function toggleSortOrder() {
+    isAscending = !isAscending; // Toggle sort order
+    const rankHeader = document.getElementById('rank-header');
+    rankHeader.innerHTML = `Rank ${isAscending ? '&#9650;' : '&#9660;'}`; // Update the rank header with arrow
+    updateRankings(); // Re-render rankings with the new sort order
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     loadData();
+
+    // Reset sorting and reload rankings when ranking type or weight class changes
     document.getElementById('ranking-type').addEventListener('change', () => {
         currentDisplayCount = 50; // Reset to initial count
-        additionalDisplayCount = 20; // Reset additional count
+        isAscending = false; // Reset to descending order
+        document.getElementById('rank-header').innerHTML = 'Rank &#9660;'; // Update the header to descending arrow
         updateRankings();
     });
     document.getElementById('weight-class-filter').addEventListener('change', () => {
         currentDisplayCount = 50; // Reset to initial count
-        additionalDisplayCount = 20; // Reset additional count
+        isAscending = false; // Reset to descending order
+        document.getElementById('rank-header').innerHTML = 'Rank &#9660;'; // Update the header to descending arrow
         updateRankings();
     });
-    document.getElementById('load-more').addEventListener('click', loadMore);
+
+    window.addEventListener('scroll', handleScroll);
+
+    // Add event listener for rank header click to toggle sorting
+    document.getElementById('rank-header').addEventListener('click', toggleSortOrder);
 });

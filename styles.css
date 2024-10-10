@@ -83,3 +83,11 @@ select {
 .filter-item select {
     height: 50px; /* Adjust as needed */
 }
+
+.sortable {
+    cursor: pointer;
+}
+
+.sortable:hover {
+    background-color: #f0f0f0;
+}
