@@ -20,17 +20,46 @@ async function displayLatestEventDate() {
             const latestEvent = rows[rows.length - 2]; // Second last row
             const latestDate = latestEvent.date || "Unknown"; // Extract the date column
 
+            // Convert date to a readable format (e.g., "February 22nd, 2025")
+            const formattedDate = formatDateToWords(latestDate);
+
+            // Remove any existing latest event date element to prevent duplicates
+            const existingDateElement = document.getElementById("latest-event-date");
+            if (existingDateElement) {
+                existingDateElement.remove();
+            }
+
             // Create a new paragraph element for displaying the latest event date
             const latestDateElement = document.createElement("p");
-            latestDateElement.textContent = `Latest Event Date: ${latestDate}`;
-            latestDateElement.id = "latest-event-date"; // Set an ID for easy styling
+            latestDateElement.textContent = `Latest Event: ${formattedDate}`;
+            latestDateElement.id = "latest-event-date"; // Set an ID for styling
 
-            // Append it to the body or any other suitable location
-            document.body.insertBefore(latestDateElement, document.getElementById("ranking-table"));
+            // Insert below the main title
+            const titleElement = document.querySelector("h1");
+            titleElement.insertAdjacentElement("afterend", latestDateElement);
         }
     } catch (error) {
         console.error("Error fetching latest event date:", error);
     }
+}
+
+// Function to convert date from "DD-MM-YYYY" to "Month DaySuffix, Year"
+function formatDateToWords(dateStr) {
+    if (!dateStr || dateStr === "Unknown") return "Unknown";
+
+    const [day, month, year] = dateStr.split("-");
+    const monthNames = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+    ];
+
+    const dayInt = parseInt(day, 10);
+    const monthName = monthNames[parseInt(month, 10) - 1];
+
+    const suffixes = ["th", "st", "nd", "rd"];
+    const relevantSuffix = (dayInt % 10 > 3 || [11, 12, 13].includes(dayInt)) ? "th" : suffixes[dayInt % 10];
+
+    return `${monthName} ${dayInt}${relevantSuffix}, ${year}`;
 }
 
 async function loadData() {

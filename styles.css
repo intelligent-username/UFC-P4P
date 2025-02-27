@@ -97,3 +97,11 @@ select {
 .sortable:hover {
     background-color: #f0f0f0;
 }
+
+#latest-event-date {
+    text-align: right;
+    font-size: 16px;
+    font-weight: bold;
+    margin-top: -10px;
+    margin-bottom: 15px;
+}
