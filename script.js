@@ -6,6 +6,33 @@ let currentDisplayCount = 50;
 let isAscending = false; // Initially descending order
 let loadingMore = false; // Flag to prevent multiple simultaneous loads
 
+async function displayLatestEventDate() {
+    try {
+        const response = await fetch('fights.csv');
+        if (!response.ok) {
+            throw new Error('Failed to fetch fights.csv');
+        }
+
+        const csvText = await response.text();
+        const rows = Papa.parse(csvText, { header: true }).data;
+
+        if (rows.length > 1) {
+            const latestEvent = rows[rows.length - 2]; // Second last row
+            const latestDate = latestEvent.date || "Unknown"; // Extract the date column
+
+            // Create a new paragraph element for displaying the latest event date
+            const latestDateElement = document.createElement("p");
+            latestDateElement.textContent = `Latest Event Date: ${latestDate}`;
+            latestDateElement.id = "latest-event-date"; // Set an ID for easy styling
+
+            // Append it to the body or any other suitable location
+            document.body.insertBefore(latestDateElement, document.getElementById("ranking-table"));
+        }
+    } catch (error) {
+        console.error("Error fetching latest event date:", error);
+    }
+}
+
 async function loadData() {
     try {
         const [fightersResponse, metadataResponse, historyResponse] = await Promise.all([
@@ -162,23 +189,25 @@ function toggleSortOrder() {
 
 document.addEventListener('DOMContentLoaded', () => {
     loadData();
+    displayLatestEventDate(); // Call the function to fetch and display the latest event date
 
     // Reset sorting and reload rankings when ranking type or weight class changes
     document.getElementById('ranking-type').addEventListener('change', () => {
-        currentDisplayCount = 50;                                               // Reset to initial count
-        isAscending = false;                                                    // Reset to descending order
-        document.getElementById('rank-header').innerHTML = 'Rank &#9660;';      // Update the header to descending arrow
+        currentDisplayCount = 50;
+        isAscending = false;
+        document.getElementById('rank-header').innerHTML = 'Rank &#9660;';
         updateRankings();
     });
     document.getElementById('weight-class-filter').addEventListener('change', () => {
-        currentDisplayCount = 50;                                                  // Reset to initial count
-        isAscending = false;                                                       // Reset to descending order
-        document.getElementById('rank-header').innerHTML = 'Rank &#9660;';         // Update the header to descending arrow
+        currentDisplayCount = 50;
+        isAscending = false;
+        document.getElementById('rank-header').innerHTML = 'Rank &#9660;';
         updateRankings();
     });
 
     window.addEventListener('scroll', handleScroll);
 
-    // Add event listener for rank header click to toggle sorting
+    // Event listener for rank header click to toggle sorting
     document.getElementById('rank-header').addEventListener('click', toggleSortOrder);
 });
+
