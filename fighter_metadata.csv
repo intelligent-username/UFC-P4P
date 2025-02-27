@@ -819,7 +819,7 @@ Shane Roller,Male,Lightweight
 Danny Castillo,Male,Lightweight
 Brian Bowles,Male,Bantamweight
 Damacio Page,Male,Bantamweight
-Chris Weidman,Male,Middleweight
+Chris Weidman,Male,Catch Weight
 Erik Koch,Male,Welterweight
 Raphael Assuncao,Male,Bantamweight
 Constantinos Philippou,Male,Middleweight
@@ -1291,7 +1291,7 @@ Joe Ellenberger,Male,Lightweight
 James Moontasri,Male,Welterweight
 Bubba Bush,Male,Middleweight
 Guilherme Vasconcelos,Male,Middleweight
-Rob Font,Male,Bantamweight
+Rob Font,Male,Catch Weight
 Robert Drysdale,Male,Light Heavyweight
 Keith Berish,Male,Middleweight
 Sarah Moras,Female,Women's Bantamweight
@@ -1684,7 +1684,7 @@ Galore Bofando,Male,Welterweight
 Justin Willis,Male,Heavyweight
 James Mulheron,Male,Heavyweight
 Junior Albini,Male,Heavyweight
-Eryk Anders,Male,Middleweight
+Eryk Anders,Male,Catch Weight
 Jarred Brooks,Male,Flyweight
 Calvin Kattar,Male,Featherweight
 Tonya Evinger,Female,Women's Bantamweight
@@ -1824,7 +1824,7 @@ Khalid Murtazaliev,Male,Middleweight
 Aleksei Kunchenko,Male,Welterweight
 Livinha Souza,Female,Women's Strawweight
 Luigi Vendramini,Male,Lightweight
-Mayra Bueno Silva,Female,Women's Bantamweight
+Mayra Bueno Silva,Female,Women's Flyweight
 Augusto Sakai,Male,Heavyweight
 Ryan Spann,Male,Light Heavyweight
 Marina Rodriguez,Female,Women's Strawweight
@@ -1935,7 +1935,7 @@ Rostem Akman,Male,Welterweight
 Sung Bin Jo,Male,Featherweight
 Grigory Popov,Male,Bantamweight
 Deron Winn,Male,Middleweight
-Amanda Ribas,Female,Women's Flyweight
+Amanda Ribas,Female,Women's Strawweight
 Dalcha Lungiambula,Male,Middleweight
 Dequan Townsend,Male,Middleweight
 Journey Newson,Male,Catch Weight
@@ -1969,7 +1969,7 @@ Ottman Azaitar,Male,Lightweight
 Liana Jojua,Female,Women's Flyweight
 Lerone Murphy,Male,Featherweight
 Hunter Azure,Male,Bantamweight
-Miles Johns,Male,Bantamweight
+Miles Johns,Male,Featherweight
 Tristan Connelly,Male,Featherweight
 Tyson Nam,Male,Flyweight
 Ariane Carnelossi,Female,Women's Strawweight
@@ -1979,7 +1979,7 @@ Jack Shore,Male,Featherweight
 Giga Chikadze,Male,Featherweight
 Makhmud Muradov,Male,Middleweight
 Mark Madsen,Male,Lightweight
-Bruno Silva,Male,Middleweight
+Bruno Silva,Male,Flyweight
 Zarah Fairn,Male,Catch Weight
 Brad Riddell,Male,Lightweight
 Jamie Mullarkey,Male,Lightweight
@@ -2066,7 +2066,7 @@ Niklas Stolze,Male,Lightweight
 Tom Aspinall,Male,Heavyweight
 Jai Herbert,Male,Lightweight
 Rhys McKee,Male,Welterweight
-Cody Durden,Male,Bantamweight
+Cody Durden,Male,Flyweight
 Vince Cachero,Male,Bantamweight
 Nate Maness,Male,Flyweight
 Johnny Munoz,Male,Bantamweight
@@ -2346,7 +2346,7 @@ Yusaku Kinoshita,Male,Welterweight
 Elves Brener,Male,Lightweight
 Blake Bilder,Male,Featherweight
 Jack Jenkins,Male,Featherweight
-Francisco Prado,Male,Lightweight
+Francisco Prado,Male,Welterweight
 Shannon Ross,Male,Flyweight
 Clayton Carpenter,Male,Flyweight
 Themba Gorimbo,Male,Welterweight
@@ -2374,7 +2374,7 @@ Chris Duncan,Male,Lightweight
 Vinicius Salvador,Male,Bantamweight
 Jaqueline Amorim,Female,Women's Strawweight
 Gaston Bolanos,Male,Bantamweight
-Bruna Brasil,Female,Women's Strawweight
+Bruna Brasil,Female,Women's Flyweight
 Junior Tafa,Male,Heavyweight
 Jamey-Lyn Horth,Female,Women's Flyweight
 Hailey Cowan,Female,Women's Bantamweight
@@ -2397,7 +2397,7 @@ Joshua Van,Male,Flyweight
 Austen Lane,Male,Heavyweight
 Ivana Petrovic,Female,Women's Flyweight
 Westin Wilson,Male,Featherweight
-Nursulton Ruziboev,Male,Welterweight
+Nursulton Ruziboev,Male,Middleweight
 Terrence Mitchell,Male,Bantamweight
 Edgar Chairez,Male,Flyweight
 Val Woodburn,Male,Welterweight
@@ -2451,7 +2451,7 @@ Rayanne dos Santos,Female,Women's Strawweight
 Shamil Gaziev,Male,Heavyweight
 Felipe Bunes,Male,Flyweight
 Tom Nolan,Male,Lightweight
-Jean Silva,Male,Lightweight
+Jean Silva,Male,Featherweight
 Ramon Taveras,Male,Bantamweight
 Serhiy Sidey,Male,Bantamweight
 Thomas Petersen,Male,Heavyweight
@@ -2473,7 +2473,7 @@ Vinicius Oliveira,Male,Bantamweight
 Benardo Sopaj,Male,Bantamweight
 Bekzat Almakhan,Male,Bantamweight
 Robelis Despaigne,Male,Heavyweight
-Michael Page,Male,Welterweight
+Michael Page,Male,Middleweight
 Charalampos Grigoriou,Male,Bantamweight
 Mitch Ramirez,Male,Lightweight
 Danny Silva,Male,Featherweight
@@ -2487,7 +2487,7 @@ Ibo Aslan,Male,Light Heavyweight
 Connor Matthews,Male,Featherweight
 Cesar Almeida,Male,Middleweight
 Dylan Budka,Male,Middleweight
-Jean Matsumoto,Male,Bantamweight
+Jean Matsumoto,Male,Catch Weight
 Victor Hugo,Male,Featherweight
 Pedro Falcao,Male,Bantamweight
 Valter Walker,Male,Heavyweight
@@ -2510,12 +2510,12 @@ Magomed Gadzhiyasulov,Male,Light Heavyweight
 Felipe Lima,Male,Featherweight
 Antonio Trocoli,Male,Middleweight
 Rei Tsuruya,Male,Flyweight
-Fatima Kline,Female,Women's Flyweight
+Fatima Kline,Female,Women's Strawweight
 Alice Ardelean,Female,Women's Strawweight
 Jordan Vucenic,Male,Lightweight
 Stephanie Luciano,Female,Women's Strawweight
 Quang Le,Male,Bantamweight
-Nikolay Veretennikov,Male,Welterweight
+Nikolay Veretennikov,Male,Catch Weight
 Stewart Nicoll,Male,Flyweight
 Wang Cong,Female,Women's Flyweight
 Jose Daniel Medina,Male,Middleweight
@@ -2549,3 +2549,25 @@ Feng Xiaocan,Female,Women's Strawweight
 Nyamjargal Tumendemberel,Male,Flyweight
 Lone'er Kavanagh,Male,Flyweight
 Jose Ochoa,Male,Flyweight
+Kai Asakura,Male,Flyweight
+Navajo Stirling,Male,Light Heavyweight
+Austin Bashi,Male,Featherweight
+Marco Tulio,Male,Middleweight
+Jacobe Smith,Male,Welterweight
+Nicolle Caliari,Female,Women's Flyweight
+Bruno Lopes,Male,Light Heavyweight
+Azamat Bekoev,Male,Middleweight
+Billy Elekana,Male,Light Heavyweight
+Bogdan Grad,Male,Featherweight
+Tallison Teixeira,Male,Heavyweight
+Aleksandre Topuria,Male,Bantamweight
+Colby Thicknesse,Male,Bantamweight
+Kody Steele,Male,Lightweight
+Jonathan Micallef,Male,Welterweight
+Quillan Salkilld,Male,Lightweight
+Jose Delgado,Male,Featherweight
+Elijah Smith,Male,Bantamweight
+Julius Walker,Male,Light Heavyweight
+Nick Klein,Male,Middleweight
+Austin Vanderford,Male,Catch Weight
+Eric McConico,Male,Middleweight

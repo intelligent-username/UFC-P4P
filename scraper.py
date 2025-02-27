@@ -29,10 +29,12 @@ def infer_gender(weight_class):
 def scrape_event_date(event_url):
     response = requests.get(event_url)
     soup = BeautifulSoup(response.content, "html.parser")
-    date_tag = soup.find("li", class_="b-list__box-list-item")
+    date_tag = soup.find_all("li", class_="b-list__box-list-item")
     if date_tag:
-        raw_date = date_tag.text.strip().replace("Date:", "").strip()
-        return convert_date_to_dd_mm_yyyy(raw_date)
+        for li in date_tag:
+            if "Date:" in li.text:
+                raw_date = li.text.replace("Date:", "").strip()
+                return convert_date_to_dd_mm_yyyy(raw_date)
     return "Unknown"
 
 # Convert date to DD-MM-YYYY format
@@ -62,10 +64,23 @@ def get_latest_scraped_date(output_file):
     return None
 
 # Sort temp_data before appending to the CSV
+def get_scraped_events(output_file):
+    """Retrieve all previously scraped event names from the CSV file."""
+    scraped_events = set()
+    if os.path.exists(output_file):
+        try:
+            with open(output_file, 'r', newline='', encoding='utf-8') as csvfile:
+                reader = csv.DictReader(csvfile)
+                for row in reader:
+                    scraped_events.add(row['event'])  # Store event names
+        except Exception as e:
+            print(f"Error reading existing events: {e}")
+    return scraped_events
 def scrape_all_events(output_file):
     page_num = 1
     has_more_pages = True
     last_scraped_date = get_latest_scraped_date(output_file)
+    scraped_events = get_scraped_events(output_file)  # Load previously scraped events
     temp_data = []  # Temporary list to hold new scraped data
 
     while has_more_pages:
@@ -79,15 +94,17 @@ def scrape_all_events(output_file):
                 event_name = event.text.strip()
                 event_url = event['href']
                 event_date = scrape_event_date(event_url)
-
-                # Parse event_date into a datetime object for comparison
                 event_date_dt = datetime.strptime(event_date, "%d-%m-%Y")
-                
-                # If the event date is less than or equal to the latest scraped date, stop scraping
-                if last_scraped_date and event_date_dt <= last_scraped_date:
+                # **STOP if event name already exists in fights.csv**
+                if event_name in scraped_events:
                     print(f"Stopping at already scraped event: {event_name} ({event_date})")
                     has_more_pages = False
                     break
+
+                # **STOP if event date is in the future**
+                if event_date_dt > datetime.today():
+                    print(f"Skipping future event: {event_name} ({event_date})")
+                    continue  # Skip to the next event
                 
                 print(f"Scraping event: {event_name} ({event_date})")
                 temp_data.extend(scrape_event(event_name, event_url, event_date))  # Collect data for this event
@@ -95,9 +112,9 @@ def scrape_all_events(output_file):
             page_num += 1
             time.sleep(1)  # Delay to avoid overloading the server
 
-    # Sort temp_data by date (ascending) before appending
+    # Sort temp_data by date before appending
     if temp_data:
-        temp_data.sort(key=lambda x: datetime.strptime(x["date"], "%d-%m-%Y"))  # Parse dd-mm-yyyy for sorting
+        temp_data.sort(key=lambda x: datetime.strptime(x["date"], "%d-%m-%Y"))
         append_to_csv(output_file, temp_data)
         print(f"Added {len(temp_data)} new fights to {output_file}")
 
@@ -111,7 +128,8 @@ def scrape_event(event_name, event_url, event_date):
     if fight_table:
         for fight_row in fight_table.find_all("tr"):
             fight_data = fight_row.find_all("td")
-            if len(fight_data) >= 10:
+            # MAKE SURE ALL FIGHTS ARE COMPLETED (no upcoming, error)
+            if len(fight_data) >= 10 and all(td.text.strip() for td in fight_data[:10]): 
                 result = fight_data[0].find('i', class_='b-flag__text').text.strip() if fight_data[0].find('i', class_='b-flag__text') else 'Unknown'
                 fighter_1 = fight_data[1].find_all("p")[0].text.strip()
                 fighter_2 = fight_data[1].find_all("p")[1].text.strip()

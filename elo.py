@@ -262,7 +262,7 @@ if __name__ == "__main__":
 
     print("Updating Elo ratings...")
 
-    print("(Note: This will take a while to run for the first time)")
+    print("(Note: This will take a while if running for the first time)")
 
     process_fights('fights.csv')
 
