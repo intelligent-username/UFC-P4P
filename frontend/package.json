@@ -1,0 +1,18 @@
+{
+  "name": "ufc-p4p-frontend",
+  "version": "1.0.0",
+  "description": "Frontend for UFC Pound-for-Pound Rankings",
+  "main": "src/main.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "serve": "vite preview --port 3000"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0"
+  },
+  "dependencies": {
+    "papaparse": "^5.4.1"
+  }
+}

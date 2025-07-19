@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Simple Pound-For-Pound Rankings</title>
-  <link rel="stylesheet" href="styles.css">
+  <title>UFC Pound-For-Pound Rankings</title>
+  <link rel="stylesheet" href="src/styles/main.css">
 </head>
 <body>
   <h1>All-Time Pound-For-Pound Rankings</h1>
@@ -23,6 +23,7 @@
   </fieldset>
 
   <h2 id="ranking-title">Current Rankings</h2>
+  <h6 style = "font-weight: normal">*Note: These rankings are based on fight history, not necessarily current skill, state, etc.</h6>
   <table id="ranking-table">
     <thead>
       <tr>
@@ -38,6 +39,6 @@
   </table>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
-  <script src="script.js"></script>
+  <script type="module" src="src/main.js"></script>
 </body>
 </html>

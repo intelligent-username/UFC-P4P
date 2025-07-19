@@ -1,3 +1,6 @@
+import { formatDateToWords, processEloHistory } from './utils/dataUtils.js';
+import { createRankingTable, createFilterControls } from './components/index.js';
+
 let fighters = [];
 let fightHistory = [];
 let weightClasses = [];
@@ -8,7 +11,7 @@ let loadingMore = false; // Flag to prevent multiple simultaneous loads
 
 async function displayLatestEventDate() {
     try {
-        const response = await fetch('fights.csv');
+        const response = await fetch('data/fights.csv');
         if (!response.ok) {
             throw new Error('Failed to fetch fights.csv');
         }
@@ -31,7 +34,7 @@ async function displayLatestEventDate() {
 
             // Create a new paragraph element for displaying the latest event date
             const latestDateElement = document.createElement("p");
-            latestDateElement.textContent = `Latest Event: ${formattedDate}`;
+            latestDateElement.textContent = `Last Updated: ${formattedDate}`;
             latestDateElement.id = "latest-event-date"; // Set an ID for styling
 
             // Insert below the main title
@@ -43,31 +46,12 @@ async function displayLatestEventDate() {
     }
 }
 
-// Function to convert date from "DD-MM-YYYY" to "Month DaySuffix, Year"
-function formatDateToWords(dateStr) {
-    if (!dateStr || dateStr === "Unknown") return "Unknown";
-
-    const [day, month, year] = dateStr.split("-");
-    const monthNames = [
-        "January", "February", "March", "April", "May", "June",
-        "July", "August", "September", "October", "November", "December"
-    ];
-
-    const dayInt = parseInt(day, 10);
-    const monthName = monthNames[parseInt(month, 10) - 1];
-
-    const suffixes = ["th", "st", "nd", "rd"];
-    const relevantSuffix = (dayInt % 10 > 3 || [11, 12, 13].includes(dayInt)) ? "th" : suffixes[dayInt % 10];
-
-    return `${monthName} ${dayInt}${relevantSuffix}, ${year}`;
-}
-
 async function loadData() {
     try {
         const [fightersResponse, metadataResponse, historyResponse] = await Promise.all([
-            fetch('fighters.csv'),
-            fetch('fighter_metadata.csv'),
-            fetch('elo_history.txt') // Fetch the elo history as a txt file
+            fetch('data/fighters.csv'),
+            fetch('data/fighter_metadata.csv'),
+            fetch('data/elo_history.txt') // Fetch the elo history as a txt file
         ]);
 
         if (!fightersResponse.ok || !metadataResponse.ok || !historyResponse.ok) {
@@ -97,35 +81,28 @@ async function loadData() {
     }
 }
 
-function processEloHistory(data) {
-    const lines = data.split('\n').filter(line => line.trim()); // Remove empty lines
-    const eloMap = new Map(); // Use a map to store max Elo for each fighter
-
-    lines.forEach(line => {
-        const parts = line.split(',').map(item => item.trim());
-        const fighterName = parts[0]; // Fighter's name is the first part
-        const elos = parts.slice(1).map(Number).filter(elo => !isNaN(elo)); // Convert ELOs to numbers
-
-        const maxElo = Math.max(...elos); // Find the maximum ELO
-
-        // Update the map with the maximum Elo
-        if (!eloMap.has(fighterName) || maxElo > eloMap.get(fighterName)) {
-            eloMap.set(fighterName, maxElo);
-        }
-    });
-
-    // Convert the map to an array of objects for easy processing later
-    return Array.from(eloMap, ([fighter_name, max_elo]) => ({ fighter_name, max_elo }));
-}
-
 function populateWeightClassDropdown() {
-    const dropdown = document.getElementById('weight-class-filter');
-    weightClasses.forEach(weightClass => {
-        const option = document.createElement('option');
-        option.value = weightClass;
-        option.textContent = weightClass;
-        dropdown.appendChild(option);
-    });
+    // Define handlers for filter changes
+    const handleRankingTypeChange = () => {
+        currentDisplayCount = 50;
+        isAscending = false;
+        document.getElementById('rank-header').innerHTML = 'Rank &#9660;';
+        updateRankings();
+    };
+    
+    const handleWeightClassChange = () => {
+        currentDisplayCount = 50;
+        isAscending = false;
+        document.getElementById('rank-header').innerHTML = 'Rank &#9660;';
+        updateRankings();
+    };
+
+    // Use the createFilterControls component function to set up the filters
+    createFilterControls(
+        weightClasses,
+        handleRankingTypeChange,
+        handleWeightClassChange
+    );
 }
 
 function updateRankings() {
@@ -170,24 +147,13 @@ function sortFightersByRank(fightersArray) {
 function displayRankings(rankedFighters) {
     const rankingBody = document.getElementById('ranking-body');
     
-    // Calculate the total number of displayed fighters
-    const totalFighters = rankedFighters.length;
-
-    rankingBody.innerHTML = rankedFighters.slice(0, currentDisplayCount).map((fighter, index) => {
-        const metadata = fighterMetadata.find(m => m.fighter_name === fighter.fighter_name) || {};
-        
-        // Determine the rank based on whether sorting is ascending or descending
-        const rank = isAscending ? totalFighters - index : index + 1;
-
-        return `
-            <tr>
-                <td>${rank}</td> <!-- Dynamically assign rank based on sort order -->
-                <td>${fighter.fighter_name}</td>
-                <td>${(fighter.current_elo || fighter.max_elo).toFixed(2)}</td>
-                <td>${metadata.latest_weight_class || 'N/A'}</td>
-            </tr>
-        `;
-    }).join('');
+    // Use the createRankingTable component function to generate the table HTML
+    rankingBody.innerHTML = createRankingTable(
+        rankedFighters, 
+        fighterMetadata, 
+        currentDisplayCount, 
+        isAscending
+    );
 
     loadingMore = false;
 }
@@ -220,23 +186,11 @@ document.addEventListener('DOMContentLoaded', () => {
     loadData();
     displayLatestEventDate(); // Call the function to fetch and display the latest event date
 
-    // Reset sorting and reload rankings when ranking type or weight class changes
-    document.getElementById('ranking-type').addEventListener('change', () => {
-        currentDisplayCount = 50;
-        isAscending = false;
-        document.getElementById('rank-header').innerHTML = 'Rank &#9660;';
-        updateRankings();
-    });
-    document.getElementById('weight-class-filter').addEventListener('change', () => {
-        currentDisplayCount = 50;
-        isAscending = false;
-        document.getElementById('rank-header').innerHTML = 'Rank &#9660;';
-        updateRankings();
-    });
+    // The event listeners for ranking-type and weight-class-filter are now set in populateWeightClassDropdown
+    // using the createFilterControls component
 
     window.addEventListener('scroll', handleScroll);
 
     // Event listener for rank header click to toggle sorting
     document.getElementById('rank-header').addEventListener('click', toggleSortOrder);
 });
-

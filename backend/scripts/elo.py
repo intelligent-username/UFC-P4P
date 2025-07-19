@@ -2,6 +2,9 @@ import os
 import csv
 from datetime import datetime
 
+# Update paths to use the frontend public data directory
+DATA_DIR = os.path.join(os.path.dirname(__file__), '..', '..', 'frontend', 'public', 'data')
+
 # Important Constants
 K_FACTOR = 30
 INITIAL_ELO = 500
@@ -16,9 +19,10 @@ def get_most_recent_date_and_line():
     Returns:
         tuple: (datetime object of most recent date, int of most recent line number)
     """
-
+    latest_fight_file = os.path.join(DATA_DIR, 'latest_fight.txt')
+    
     try:
-        with open('latest_fight.txt', 'r') as f:
+        with open(latest_fight_file, 'r') as f:
             lines = f.readlines()
             most_recent_date = datetime.strptime(lines[0].strip(), "%d-%m-%Y")
             most_recent_line = int(lines[1].strip())
@@ -35,8 +39,9 @@ def update_most_recent_date_and_line(date, line):
         line (int): The line number of the most recent fight in the CSV.
     
     """
-
-    with open('latest_fight.txt', 'w') as f:
+    latest_fight_file = os.path.join(DATA_DIR, 'latest_fight.txt')
+    
+    with open(latest_fight_file, 'w') as f:
         f.write(date.strftime("%d-%m-%Y") + '\n')
         f.write(str(line) + '\n')
 
@@ -47,7 +52,9 @@ def update_most_recent_date(date):
     Args:
         date (datetime): The date of the most recent fight.
     """
-    with open('latest_fight.txt', 'w') as f:
+    latest_fight_file = os.path.join(DATA_DIR, 'latest_fight.txt')
+    
+    with open(latest_fight_file, 'w') as f:
         f.write(date.strftime("%d-%m-%Y"))
 
 def load_fighters():
@@ -57,10 +64,11 @@ def load_fighters():
     Returns:
         dict: A dictionary with fighter names as keys and their Elo ratings as values.
     """
-
+    fighters_file = os.path.join(DATA_DIR, 'fighters.csv')
+    
     fighters = {}
     try:
-        with open('fighters.csv', 'r', newline='') as csvfile:
+        with open(fighters_file, 'r', newline='') as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
                 fighters[row['fighter_name']] = float(row['current_elo'])
@@ -75,15 +83,16 @@ def save_fighters(fighters):
     Args:
         fighters (dict): A dictionary with fighter names as keys and their Elo ratings as values.
     """
-
-    with open('fighters.csv', 'w', newline='') as csvfile:
+    fighters_file = os.path.join(DATA_DIR, 'fighters.csv')
+    
+    with open(fighters_file, 'w', newline='') as csvfile:
         fieldnames = ['fighter_name', 'current_elo']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
         for fighter, elo in fighters.items():
             writer.writerow({'fighter_name': fighter, 'current_elo': elo})
 
-def update_elo_history(fighter_name, new_elo, history_file='elo_history.txt'):
+def update_elo_history(fighter_name, new_elo, history_file=None):
     """
     Update the Elo history for a fighter in 'elo_history.txt'.
     
@@ -92,7 +101,9 @@ def update_elo_history(fighter_name, new_elo, history_file='elo_history.txt'):
         new_elo (float): The new Elo rating for the fighter.
         history_file (str, optional): The file to store Elo history. Defaults to 'elo_history.txt'.
     """
-
+    if history_file is None:
+        history_file = os.path.join(DATA_DIR, 'elo_history.txt')
+    
     history_data = {}
     
     # Read current history data
@@ -127,12 +138,13 @@ def update_fighter_metadata(fighter_name, gender, weight_class):
         gender (str): The gender of the fighter.
         weight_class (str): The weight class of the fighter.
     """
-
+    metadata_file = os.path.join(DATA_DIR, 'fighter_metadata.csv')
+    
     metadata = []
     updated = False
 
     try:
-        with open('fighter_metadata.csv', 'r', newline='') as csvfile:
+        with open(metadata_file, 'r', newline='') as csvfile:
             reader = csv.DictReader(csvfile)
             metadata = list(reader)
     except FileNotFoundError:
@@ -148,7 +160,7 @@ def update_fighter_metadata(fighter_name, gender, weight_class):
     if not updated:
         metadata.append({'fighter_name': fighter_name, 'gender': gender, 'latest_weight_class': weight_class})
 
-    with open('fighter_metadata.csv', 'w', newline='') as csvfile:
+    with open(metadata_file, 'w', newline='') as csvfile:
         fieldnames = ['fighter_name', 'gender', 'latest_weight_class']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
@@ -264,6 +276,8 @@ if __name__ == "__main__":
 
     print("(Note: This will take a while if running for the first time)")
 
-    process_fights('fights.csv')
+    # Use the data directory path
+    csv_file = os.path.join(DATA_DIR, 'fights.csv')
+    process_fights(csv_file)
 
     print("Elo ratings updated successfully.")

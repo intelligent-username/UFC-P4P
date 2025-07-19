@@ -5,6 +5,9 @@ import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
 
+# Update the data file path to point to the frontend public data directory
+DATA_DIR = os.path.join(os.path.dirname(__file__), '..', '..', 'frontend', 'public', 'data')
+
 base_url = "http://ufcstats.com/statistics/events/completed?page="
 MONTHS = {
     "January": "01", "February": "02", "March": "03", "April": "04", "May": "05", "June": "06",
@@ -76,6 +79,7 @@ def get_scraped_events(output_file):
         except Exception as e:
             print(f"Error reading existing events: {e}")
     return scraped_events
+
 def scrape_all_events(output_file):
     page_num = 1
     has_more_pages = True
@@ -164,5 +168,7 @@ def append_to_csv(output_file, new_data):
         writer.writerows(new_data)
 
 if __name__ == "__main__":
-    scrape_all_events('fights.csv')
+    # Use the data directory path
+    output_file = os.path.join(DATA_DIR, 'fights.csv')
+    scrape_all_events(output_file)
     print("Finished, Success")
