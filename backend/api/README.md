@@ -1,6 +1,6 @@
 # UFC Pound-for-Pound Rankings - Backend API
 
-This is a simple Flask API that serves the UFC rankings data.
+This is a simple Flask API that serves the UFC rankings data. It's empty right now but at some point in the future I'll fill it in.
 
 ## Setup
 

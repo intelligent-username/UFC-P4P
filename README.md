@@ -5,7 +5,7 @@
 ### Process
 
 - Use Python to scrape all fights from ufcstats website
-- Add the fights to a csv in [backend/data/fights.csv](/backend/data/fights.csv), with required information (some information currently not in use, but will be used to implement later features)
+- Add the fights to a csv in [frontend/data/fights.csv](/frontend/data/fights.csv), with required information (some information currently not in use, but will be used to implement later features)
 - Use an `elo` system to figure out the 'score' ranking of each fighter after each fight
     Note: extra points are awarded for KOs, TKOs, and submissions, as well as even more extra points when they occur before round 5.
 - Sort in descending order & display on the page
@@ -20,10 +20,10 @@
 
 ### Project Structure
 
-```
+```md
 ufc-p4p-rankings/
 ├── backend/
-│   ├── scripts/        # Python scraping and ELO calculation scripts
+│   ├── scripts/       # Python scraping and ELO calculation scripts
 │   └── api/           # API endpoints (for Phase 2)
 ├── frontend/
 │   ├── public/
@@ -39,6 +39,7 @@ ufc-p4p-rankings/
 ### Running the Project
 
 #### Backend Scripts
+
 ```bash
 cd backend/scripts
 pip install -r requirements.txt
@@ -47,6 +48,7 @@ python elo.py        # Calculate ELO ratings
 ```
 
 #### Frontend Development
+
 ```bash
 cd frontend
 npm install
