@@ -1,11 +1,13 @@
 # UFC Pound For Pound Rankings
 
-## Rankings Made Scientifically Based on all Previous fights, Performance Metrics, etc
+## Based on History and Math
+
+TLDR: visit [ufc.varak.dev](https://ufc.varak.dev) to see the rankings.
 
 ### Process
 
-- Use Python to scrape all fights from ufcstats website
-- Add the fights to a csv in [frontend/data/fights.csv](/frontend/data/fights.csv), with required information (some information currently not in use, but will be used to implement later features)
+- Make Python requests to scrape all fights from ufcstats website
+- Add the fights to a csv in [data/fights.csv](data/fights.csv), with required information (some information currently not in use, but will be used to implement later features)
 - Use an `elo` system to figure out the 'score' ranking of each fighter after each fight
     Note: extra points are awarded for KOs, TKOs, and submissions, as well as even more extra points when they occur before round 5.
 - Sort in descending order & display on the page
@@ -17,6 +19,7 @@
 - Historical Rankings (all time peak elos)
 - Filter by Weight Class
 - Data updated by running scraper.py and elo.py from backend/scripts/
+- Individual fighter pages with historical ELO graph
 
 ### Project Structure
 
