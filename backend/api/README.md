@@ -2,6 +2,8 @@
 
 This is a simple Flask API for updating the UFC rankings data. When it's up, the front end has a button that says "Update", otherwise the button is not there. This is the only function for the backend. You can run the app without the backend at all. In the future, the hosted project may permanently host the backend somewhere so the update button is always visible and available to use.
 
+Note that the main data source for this project is [ufcstats](https://www.ufcstats.com/), which isn't the official UFC site.
+
 ## Setup
 
 1. Install dependencies:

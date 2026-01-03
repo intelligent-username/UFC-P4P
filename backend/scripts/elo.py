@@ -10,6 +10,7 @@ K_FACTOR = 30
 INITIAL_ELO = 500
 ROUND_BONUS = 0.02
 BONUS_KO_SUB = 0.15
+HISTORY_FILE = os.path.join(DATA_DIR, 'elo_history.csv')
 
 def get_most_recent_date_and_line():
     """
@@ -92,42 +93,6 @@ def save_fighters(fighters):
         for fighter, elo in fighters.items():
             writer.writerow({'fighter_name': fighter, 'current_elo': elo})
 
-def update_elo_history(fighter_name, new_elo, history_file=None):
-    """
-    Update the Elo history for a fighter in 'elo_history.txt'.
-    
-    Args:
-        fighter_name (str): The name of the fighter.
-        new_elo (float): The new Elo rating for the fighter.
-        history_file (str, optional): The file to store Elo history. Defaults to 'elo_history.txt'.
-    """
-    if history_file is None:
-        history_file = os.path.join(DATA_DIR, 'elo_history.txt')
-    
-    history_data = {}
-    
-    # Read current history data
-    if os.path.exists(history_file):
-        with open(history_file, mode='r', newline='', encoding='utf-8') as file:
-            reader = csv.reader(file)
-            for row in reader:
-                if row:
-                    fighter = row[0]
-                    elos = [float(elo) for elo in row[1:]]
-                    history_data[fighter] = elos
-    
-    # Update or add Elo for the fighter
-    if fighter_name in history_data:
-        history_data[fighter_name].append(new_elo)
-    else:
-        history_data[fighter_name] = [INITIAL_ELO, new_elo]
-    
-    # Write back the updated history data
-    with open(history_file, mode='w', newline='', encoding='utf-8') as file:
-        writer = csv.writer(file)
-        for fighter, elos in history_data.items():
-            writer.writerow([fighter] + elos)
-            
 def update_fighter_metadata(fighter_name, gender, weight_class):
     """
     Update or add metadata for a fighter in 'fighter_metadata.csv'.
@@ -181,7 +146,7 @@ def expected_score(elo_a, elo_b):
 
     return 1 / (1 + 10 ** ((elo_b - elo_a) / 400))
 
-def update_elo(fighter_1_elo, fighter_2_elo, result, method, fight_round):
+def update_elo(fighter_1_elo, fighter_2_elo, result, method, fight_round, streak_bonus=0):
     """
     Update Elo ratings for two fighters based on fight result.
     
@@ -191,6 +156,7 @@ def update_elo(fighter_1_elo, fighter_2_elo, result, method, fight_round):
         result (str): The result of the fight ('win', 'loss', or 'draw').
         method (str): The method of victory (e.g., 'KO', 'TKO', 'SUB', 'DEC').
         fight_round (str): The round in which the fight ended.
+        streak_bonus (int): Current win streak for fighter 1 if applicable.
     
     Returns:
         tuple: (new_elo_fighter_1, new_elo_fighter_2)
@@ -205,6 +171,11 @@ def update_elo(fighter_1_elo, fighter_2_elo, result, method, fight_round):
         round_factor = max(1, 5 - int(fight_round))
         bonus = BONUS_KO_SUB + (ROUND_BONUS * round_factor)
         elo_change_1 += elo_change_1 * bonus
+    
+    # Add win streak bonus
+    if streak_bonus > 0:
+        streak_factor = 0.05 * min(streak_bonus, 10)  # Cap at 10 wins
+        elo_change_1 += elo_change_1 * streak_factor
 
     fighter_1_new_elo = fighter_1_elo + elo_change_1
     fighter_2_new_elo = fighter_2_elo - elo_change_1
@@ -220,31 +191,32 @@ def process_fights(csv_file):
     """
 
     most_recent_date, most_recent_line = get_most_recent_date_and_line()
-    fighters = load_fighters()
+    force_rebuild_history = not os.path.exists(HISTORY_FILE)
+
+    if force_rebuild_history:
+        # Ensure we rebuild from the top if history is missing
+        most_recent_date, most_recent_line = datetime.min, 0
+
+    fighters = {} if force_rebuild_history else load_fighters()
     latest_fight_date = most_recent_date  # To track the newest fight processed
     current_line = 0  # Line tracker
 
-    # Load elo history and metadata once at the start
-    history_file = os.path.join(DATA_DIR, 'elo_history.txt')
-    history_data = {}
-    if os.path.exists(history_file):
-        with open(history_file, mode='r', newline='', encoding='utf-8') as file:
-            reader = csv.reader(file)
-            for row in reader:
-                if row:
-                    fighter = row[0]
-                    elos = [float(elo) for elo in row[1:]]
-                    history_data[fighter] = elos
+    # Collect dated elo history rows during processing
+    history_rows = []
+
+    # Track current win streaks
+    current_streaks = {}
 
     metadata_file = os.path.join(DATA_DIR, 'fighter_metadata.csv')
-    metadata = {}
-    try:
-        with open(metadata_file, 'r', newline='') as csvfile:
-            reader = csv.DictReader(csvfile)
-            for row in reader:
-                metadata[row['fighter_name']] = row
-    except FileNotFoundError:
-        pass
+    metadata = {} if force_rebuild_history else {}
+    if not force_rebuild_history:
+        try:
+            with open(metadata_file, 'r', newline='') as csvfile:
+                reader = csv.DictReader(csvfile)
+                for row in reader:
+                    metadata[row['fighter_name']] = row
+        except FileNotFoundError:
+            pass
 
     with open(csv_file, 'r', newline='', encoding='utf-8') as csvfile:
         reader = csv.DictReader(csvfile)
@@ -263,27 +235,56 @@ def process_fights(csv_file):
             result, method, fight_round = row['result'], row['method'], row['round']
             gender, weight_class = row['gender'], row['weight_class']
             
+            # Skip Elo updates for disqualifications, no contests, and overturned results
+            invalid_results = ['DQ', 'NC', 'overturned']
+            if result in invalid_results:
+                # Still update metadata
+                metadata[fighter_1] = {'fighter_name': fighter_1, 'gender': gender, 'latest_weight_class': weight_class}
+                metadata[fighter_2] = {'fighter_name': fighter_2, 'gender': gender, 'latest_weight_class': weight_class}
+                continue
+            
             # Load current Elo, default to INITIAL_ELO
             fighter_1_elo = fighters.get(fighter_1, INITIAL_ELO)
             fighter_2_elo = fighters.get(fighter_2, INITIAL_ELO)
             
+            # Determine win streaks
+            streak_bonus = 0
+            if result == 'win':
+                streak_bonus = current_streaks.get(fighter_1, 0) + 1
+                current_streaks[fighter_1] = streak_bonus
+                current_streaks[fighter_2] = 0
+            elif result == 'loss':
+                streak_bonus = 0
+                current_streaks[fighter_2] = current_streaks.get(fighter_2, 0) + 1
+                current_streaks[fighter_1] = 0
+            # For draw, keep streaks as is
+            
             # Calculate new Elos
-            fighter_1_new_elo, fighter_2_new_elo = update_elo(fighter_1_elo, fighter_2_elo, result, method, fight_round)
+            fighter_1_new_elo, fighter_2_new_elo = update_elo(fighter_1_elo, fighter_2_elo, result, method, fight_round, streak_bonus)
             
             # Update Elo in memory
             fighters[fighter_1] = fighter_1_new_elo
             fighters[fighter_2] = fighter_2_new_elo
             
-            # Update Elo history in memory
-            if fighter_1 in history_data:
-                history_data[fighter_1].append(fighter_1_new_elo)
-            else:
-                history_data[fighter_1] = [INITIAL_ELO, fighter_1_new_elo]
-            
-            if fighter_2 in history_data:
-                history_data[fighter_2].append(fighter_2_new_elo)
-            else:
-                history_data[fighter_2] = [INITIAL_ELO, fighter_2_new_elo]
+            # Track Elo history with dates for both fighters
+            wl_1 = 'W' if result == 'win' else 'L'
+            wl_2 = 'L' if result == 'win' else 'W'
+            history_rows.append({
+                'fighter_name': fighter_1,
+                'elo': fighter_1_new_elo,
+                'date': row['date'],
+                'WL': wl_1,
+                'method': method,
+                'opponent': fighter_2
+            })
+            history_rows.append({
+                'fighter_name': fighter_2,
+                'elo': fighter_2_new_elo,
+                'date': row['date'],
+                'WL': wl_2,
+                'method': method,
+                'opponent': fighter_1
+            })
             
             # Update metadata in memory
             metadata[fighter_1] = {'fighter_name': fighter_1, 'gender': gender, 'latest_weight_class': weight_class}
@@ -296,11 +297,14 @@ def process_fights(csv_file):
     # Save all updates to disk at the end
     save_fighters(fighters)
 
-    # Write elo history once
-    with open(history_file, mode='w', newline='', encoding='utf-8') as file:
-        writer = csv.writer(file)
-        for fighter, elos in history_data.items():
-            writer.writerow([fighter] + elos)
+    # Write elo history once, sorted by date
+    if history_rows:
+        history_rows.sort(key=lambda x: datetime.strptime(x['date'], "%d-%m-%Y"))
+        with open(HISTORY_FILE, mode='w', newline='', encoding='utf-8') as file:
+            fieldnames = ['fighter_name', 'elo', 'date', 'WL', 'method', 'opponent']
+            writer = csv.DictWriter(file, fieldnames=fieldnames)
+            writer.writeheader()
+            writer.writerows(history_rows)
 
     # Write metadata once
     with open(metadata_file, 'w', newline='', encoding='utf-8') as csvfile:
@@ -318,7 +322,7 @@ if __name__ == "__main__":
 
     print("[ELO] Updating Elo ratings...")
 
-    print("(Note: This will take a while if running for the first time)")
+    print("(Note: This might take a while if running for the first time)")
 
     # Use the data directory path
     csv_file = os.path.join(DATA_DIR, 'fights.csv')
