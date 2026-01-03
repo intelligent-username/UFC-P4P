@@ -1,5 +1,8 @@
 # .gitignore
 
+*_backup*
+*test.js
+
 # Python
 __pycache__/
 *.py[cod]

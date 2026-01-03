@@ -105,3 +105,12 @@ select {
     margin-top: -10px;
     margin-bottom: 15px;
 }
+
+.fighter-link {
+    color: #333;
+    text-decoration: none;
+}
+
+.fighter-link:hover {
+    text-decoration: underline;
+}

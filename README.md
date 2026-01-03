@@ -38,6 +38,8 @@ ufc-p4p-rankings/
 
 ### Running the Project
 
+Requires npm and Python 3.x as prerequisites.
+
 #### Backend Scripts
 
 ```bash

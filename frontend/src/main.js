@@ -11,7 +11,7 @@ let loadingMore = false; // Flag to prevent multiple simultaneous loads
 
 async function displayLatestEventDate() {
     try {
-        const response = await fetch('data/fights.csv');
+        const response = await fetch('/data/fights.csv');
         if (!response.ok) {
             throw new Error('Failed to fetch fights.csv');
         }
@@ -34,7 +34,7 @@ async function displayLatestEventDate() {
 
             // Create a new paragraph element for displaying the latest event date
             const latestDateElement = document.createElement("p");
-            latestDateElement.textContent = `Last Updated: ${formattedDate}`;
+            latestDateElement.textContent = `Latest Indexed Event: ${formattedDate}`;
             latestDateElement.id = "latest-event-date"; // Set an ID for styling
 
             // Insert below the main title
@@ -49,9 +49,9 @@ async function displayLatestEventDate() {
 async function loadData() {
     try {
         const [fightersResponse, metadataResponse, historyResponse] = await Promise.all([
-            fetch('data/fighters.csv'),
-            fetch('data/fighter_metadata.csv'),
-            fetch('data/elo_history.txt') // Fetch the elo history as a txt file
+            fetch('/data/fighters.csv'),
+            fetch('/data/fighter_metadata.csv'),
+            fetch('/data/elo_history.txt')
         ]);
 
         if (!fightersResponse.ok || !metadataResponse.ok || !historyResponse.ok) {

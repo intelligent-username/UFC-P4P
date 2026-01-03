@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 
 # Update the data file path to point to the frontend public data directory
-DATA_DIR = os.path.join(os.path.dirname(__file__), '..', '..', 'frontend', 'public', 'data')
+DATA_DIR = os.path.join(os.path.dirname(__file__), '..', '..', 'data')
 
 base_url = "http://ufcstats.com/statistics/events/completed?page="
 MONTHS = {
@@ -62,7 +62,7 @@ def get_latest_scraped_date(output_file):
                     return datetime.strptime(last_date, "%d-%m-%Y")  # Convert to datetime object
                 return None
         except Exception as e:
-            print(f"Error reading the latest date from CSV: {e}")
+            print(f"[Scraper] Error reading the latest date from CSV: {e}")
             return None
     return None
 
@@ -77,7 +77,7 @@ def get_scraped_events(output_file):
                 for row in reader:
                     scraped_events.add(row['event'])  # Store event names
         except Exception as e:
-            print(f"Error reading existing events: {e}")
+            print(f"[Scraper] Error reading existing events: {e}")
     return scraped_events
 
 def scrape_all_events(output_file):
@@ -101,7 +101,8 @@ def scrape_all_events(output_file):
                 event_date_dt = datetime.strptime(event_date, "%d-%m-%Y")
                 # **STOP if event name already exists in fights.csv**
                 if event_name in scraped_events:
-                    print(f"Stopping at already scraped event: {event_name} ({event_date})")
+                    print(f"[Scraper] Reached latest retrieved: {event_name} ({event_date})")
+                    print(f"[Scraper] Stopping...")
                     has_more_pages = False
                     break
 
@@ -110,7 +111,7 @@ def scrape_all_events(output_file):
                     print(f"Skipping future event: {event_name} ({event_date})")
                     continue  # Skip to the next event
                 
-                print(f"Scraping event: {event_name} ({event_date})")
+                print(f"[Scraper] Event: {event_name} ({event_date})")
                 temp_data.extend(scrape_event(event_name, event_url, event_date))  # Collect data for this event
 
             page_num += 1
@@ -120,7 +121,7 @@ def scrape_all_events(output_file):
     if temp_data:
         temp_data.sort(key=lambda x: datetime.strptime(x["date"], "%d-%m-%Y"))
         append_to_csv(output_file, temp_data)
-        print(f"Added {len(temp_data)} new fights to {output_file}")
+        print(f"[Scraper] Added {len(temp_data)} new fights to {output_file}")
 
 # Scrape each event and return the fight details as a list of dicts
 def scrape_event(event_name, event_url, event_date):
@@ -171,4 +172,4 @@ if __name__ == "__main__":
     # Use the data directory path
     output_file = os.path.join(DATA_DIR, 'fights.csv')
     scrape_all_events(output_file)
-    print("Finished, Success")
+    print("[Scraper] Finished, Success")

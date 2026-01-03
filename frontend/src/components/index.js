@@ -18,15 +18,16 @@ export function createRankingTable(rankedFighters, fighterMetadata, currentDispl
     // Generate the table rows HTML
     return rankedFighters.slice(0, currentDisplayCount).map((fighter, index) => {
         const metadata = fighterMetadata.find(m => m.fighter_name === fighter.fighter_name) || {};
-        
-        // Determine the rank based on whether sorting is ascending or descending
         const rank = isAscending ? totalFighters - index : index + 1;
+        const rawScore = fighter.current_elo ?? fighter.max_elo;
+        const eloDisplay = Number.isFinite(rawScore) ? rawScore.toFixed(2) : 'N/A';
 
+        const encodedName = encodeURIComponent(fighter.fighter_name);
         return `
             <tr>
                 <td>${rank}</td>
-                <td>${fighter.fighter_name}</td>
-                <td>${(fighter.current_elo || fighter.max_elo).toFixed(2)}</td>
+                <td><a href="fighter.html?name=${encodedName}" class="fighter-link">${fighter.fighter_name}</a></td>
+                <td>${eloDisplay}</td>
                 <td>${metadata.latest_weight_class || 'N/A'}</td>
             </tr>
         `;
