@@ -1,4 +1,4 @@
-# UFC Pound For Pound Rankings
+# UFC P4P Rankings
 
 ## Based on History and Math
 
@@ -45,6 +45,8 @@ Requires npm and Python 3.x as prerequisites.
 
 #### Backend Scripts
 
+For fetching fresh/updating data:
+
 ```bash
 cd backend/scripts
 pip install -r requirements.txt
@@ -52,7 +54,17 @@ python scraper.py    # Update fight data
 python elo.py        # Calculate ELO ratings
 ```
 
-#### Frontend Development
+For automatically updating via API:
+
+```bash
+cd backend/api
+pip install -r requirements.txt
+python app.py        # Start the Flask API
+```
+
+(Will be available at `http://localhost:5000`)
+
+#### Frontend
 
 ```bash
 cd frontend

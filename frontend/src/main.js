@@ -1,6 +1,8 @@
 import { formatDateToWords, processEloHistory } from './utils/dataUtils.js';
 import { createRankingTable, createFilterControls } from './components/index.js';
 
+const BACKEND_BASE_URL = 'http://localhost:5000';
+
 let fighters = [];
 let fightHistory = [];
 let weightClasses = [];
@@ -8,6 +10,7 @@ let fighterMetadata = [];
 let currentDisplayCount = 50;
 let isAscending = false; // Initially descending order
 let loadingMore = false; // Flag to prevent multiple simultaneous loads
+let backendOnline = false;
 
 async function displayLatestEventDate() {
     try {
@@ -78,6 +81,66 @@ async function loadData() {
     } catch (error) {
         console.error('Error loading data:', error);
         document.getElementById('ranking-body').innerHTML = '<tr><td colspan="4">Error loading data. Please try again.</td></tr>';
+    }
+}
+
+function updateBackendStatusUI(isOnline) {
+    const container = document.getElementById('backend-status');
+    const updateButton = document.getElementById('update-backend');
+
+    if (!container || !updateButton) return;
+
+    container.style.display = isOnline ? 'flex' : 'none';
+    updateButton.style.display = isOnline ? 'inline-block' : 'none';
+}
+
+async function pingBackend() {
+    try {
+        const response = await fetch(`${BACKEND_BASE_URL}/health`, { cache: 'no-store' });
+        return response.ok;
+    } catch (error) {
+        return false;
+    }
+}
+
+async function pollBackendStatus() {
+    backendOnline = await pingBackend();
+    updateBackendStatusUI(backendOnline);
+}
+
+function startBackendPolling() {
+    pollBackendStatus();
+    setInterval(pollBackendStatus, 15000);
+}
+
+async function triggerBackendUpdate() {
+    const updateButton = document.getElementById('update-backend');
+
+    if (!updateButton) return;
+
+    if (!backendOnline) {
+        updateBackendStatusUI(false);
+        return;
+    }
+
+    updateButton.disabled = true;
+    const originalLabel = updateButton.textContent;
+    updateButton.textContent = 'Updating...';
+
+    try {
+        const response = await fetch(`${BACKEND_BASE_URL}/update`, { method: 'POST' });
+
+        if (!response.ok) {
+            throw new Error('Update failed');
+        }
+
+        await loadData();
+        await displayLatestEventDate();
+    } catch (error) {
+        console.error('Error triggering update:', error);
+    } finally {
+        updateButton.disabled = false;
+        updateButton.textContent = originalLabel;
     }
 }
 
@@ -193,4 +256,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Event listener for rank header click to toggle sorting
     document.getElementById('rank-header').addEventListener('click', toggleSortOrder);
+
+    const updateButton = document.getElementById('update-backend');
+    if (updateButton) {
+        updateButton.addEventListener('click', triggerBackendUpdate);
+    }
+
+    startBackendPolling();
 });
