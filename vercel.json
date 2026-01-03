@@ -19,6 +19,10 @@
       "dest": "/backend/api/app.py"
     },
     {
+      "src": "/fighter(?:/(.*))?",
+      "dest": "/frontend/dist/fighter.html"
+    },
+    {
       "src": "/(.*)",
       "dest": "/frontend/dist/$1"
     }

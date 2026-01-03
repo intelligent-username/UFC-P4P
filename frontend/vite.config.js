@@ -9,6 +9,12 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
+    rollupOptions: {
+      input: {
+        index: resolve(__dirname, 'index.html'),
+        fighter: resolve(__dirname, 'fighter.html')
+      }
+    }
   },
   server: {
     port: 3000,
