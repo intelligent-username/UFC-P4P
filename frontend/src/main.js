@@ -54,7 +54,7 @@ async function loadData() {
         const [fightersResponse, metadataResponse, historyResponse] = await Promise.all([
             fetch('/data/fighters.csv'),
             fetch('/data/fighter_metadata.csv'),
-            fetch('/data/elo_history.txt')
+            fetch('/data/elo_history.csv')
         ]);
 
         if (!fightersResponse.ok || !metadataResponse.ok || !historyResponse.ok) {
@@ -70,7 +70,7 @@ async function loadData() {
         fighters = Papa.parse(fightersData, { header: true, dynamicTyping: true }).data;
         fighterMetadata = Papa.parse(metadataData, { header: true, dynamicTyping: true }).data;
 
-        // Process elo_history.txt manually
+        // Process elo_history.csv manually
         fightHistory = processEloHistory(historyData);
 
         // Extract unique weight classes from metadata & update dropdown

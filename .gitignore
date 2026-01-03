@@ -2,6 +2,8 @@
 
 *_backup*
 *test.js
+*_copy*.csv
+*_copy*.txt
 
 # Python
 __pycache__/

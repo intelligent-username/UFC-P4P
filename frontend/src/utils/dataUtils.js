@@ -18,19 +18,18 @@ export function formatDateToWords(dateStr) {
     return `${monthName} ${dayInt}${relevantSuffix}, ${year}`;
 }
 
-export function processEloHistory(data) {
-    const lines = data.split('\n').filter(line => line.trim());
+export function processEloHistory(csvText) {
+    const lines = csvText.split('\n').slice(1).filter(line => line.trim());
     const eloMap = new Map();
 
     lines.forEach(line => {
-        const parts = line.split(',').map(item => item.trim());
-        const fighterName = parts[0];
-        const elos = parts.slice(1).map(Number).filter(elo => !isNaN(elo));
+        const [fighterName, eloStr] = line.split(',').map(item => item && item.trim());
+        const elo = parseFloat(eloStr);
+        if (!fighterName || Number.isNaN(elo)) return;
 
-        const maxElo = Math.max(...elos);
-
-        if (!eloMap.has(fighterName) || maxElo > eloMap.get(fighterName)) {
-            eloMap.set(fighterName, maxElo);
+        const currentMax = eloMap.get(fighterName);
+        if (currentMax === undefined || elo > currentMax) {
+            eloMap.set(fighterName, elo);
         }
     });
 

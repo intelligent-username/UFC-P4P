@@ -11,7 +11,17 @@
   <a href="index.html" class="back-link">&larr; Back to Rankings</a>
   <h1 id="fighter-name">Loading...</h1>
   
-  <h2>Elo History</h2>
+  <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 20px;">
+    <h2 style="margin: 0;">Elo History</h2>
+    <button id="compare-btn" type="button">Compare</button>
+  </div>
+  <div id="compare-container" style="display: none; margin-bottom: 20px; text-align: right;">
+    <div style="position: relative; display: inline-block;">
+      <input type="text" id="compare-search" placeholder="Search fighter name..." style="width: 250px; box-sizing: border-box;" />
+      <button id="close-compare" style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 18px; cursor: pointer; color: #666;">×</button>
+    </div>
+    <div id="compare-results" style="max-height: 200px; overflow-y: auto; border: 1px solid #ccc; display: none; width: 250px; text-align: right; margin-left: auto; margin-right: 0; box-sizing: border-box;"></div>
+  </div>
   <div id="elo-history">
     <p>Loading...</p>
   </div>
