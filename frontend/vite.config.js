@@ -31,6 +31,27 @@ export default defineConfig({
             return;
           }
 
+          const sendFile = (path) => {
+            fs.readFile(path, (err, data) => {
+              if (err) return next();
+              const ext = path.split('.').pop();
+              const type = ext === 'csv' ? 'text/csv' : 'text/plain';
+              res.setHeader('Content-Type', type);
+              res.end(data);
+            });
+          };
+
+          // If elo_history.csv is missing locally, fall back to any backup copy
+          const fallbacks = ['elo_history.csv', 'elo_history_copy.csv', 'elo_history_copy1.csv'];
+          if (filePath.endsWith('elo_history.csv')) {
+            const existing = fallbacks
+              .map(name => resolve(__dirname, '../data', name))
+              .find(p => fs.existsSync(p));
+            if (existing) {
+              return sendFile(existing);
+            }
+          }
+
           fs.readFile(filePath, (err, data) => {
             if (err) return next();
 
@@ -47,6 +68,17 @@ export default defineConfig({
         const dest = resolve(__dirname, 'dist/data');
         fs.mkdirSync(dest, { recursive: true });
         fs.cpSync(source, dest, { recursive: true });
+
+        // If elo_history.csv is absent, fall back to the latest backup so Vercel gets a file
+        const primary = resolve(dest, 'elo_history.csv');
+        if (!fs.existsSync(primary)) {
+          const backup = ['elo_history_copy.csv', 'elo_history_copy1.csv']
+            .map(name => resolve(source, name))
+            .find(p => fs.existsSync(p));
+          if (backup) {
+            fs.copyFileSync(backup, primary);
+          }
+        }
       }
     }
   ]
